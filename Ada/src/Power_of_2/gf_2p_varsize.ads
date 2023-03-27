@@ -60,7 +60,7 @@ package Gf_2p_Varsize is
 
    function To_Galois (X : Interfaces.Unsigned_64) return Galois;
 private
-   type Galois is  mod 2 ** 64;
+   type Galois is  new Interfaces.Unsigned_64;
 
    Zero : constant Galois := 0;
    One  : constant Galois := 1;

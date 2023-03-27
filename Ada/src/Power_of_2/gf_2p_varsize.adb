@@ -6,7 +6,7 @@ package body Gf_2p_Varsize is
 
 
 
-   package My_Io is new Text_Io.modular_Io(galois);
+   package My_Io is new Text_Io.Modular_Io (Galois);
 
    --
    -- A couple of words about the implementation used.  As well known,
@@ -53,20 +53,19 @@ package body Gf_2p_Varsize is
 
    -- Log and Exp table used for small size fields
    -- (2^n with n <= 16)
-   type Log_Table_t is array (Positive range <>) of Natural;
-   type Exp_Table_t is array (Natural range <>) of Galois;
+   type Log_Table_T is array (Positive range <>) of Natural;
+   type Exp_Table_T is array (Natural range <>) of Galois;
 
-   type Log_Table_Ptr is access Log_Table_t;
-   type exp_Table_Ptr is access Exp_Table_t;
+   type Log_Table_Ptr is access Log_Table_T;
+   type Exp_Table_Ptr is access Exp_Table_T;
 
-   Log_Table: Log_Table_Ptr;
-   Exp_Table: Exp_Table_Ptr;
+   Log_Table : Log_Table_Ptr;
+   Exp_Table : Exp_Table_Ptr;
 
    type Binary_Operator is access function (Left, Right : Galois) return Galois;
    type Unary_Operator  is access function (X : Galois) return Galois;
 
    Product_Callback  : Binary_Operator;
-   -- Division_Callback : Binary_Operator;
    Inverse_Callback  : Unary_Operator;
 
    --
@@ -79,73 +78,73 @@ package body Gf_2p_Varsize is
    -- to P(x), but the one relative to R(x).  Carry_Table(n)
    -- is the binary word of R(x) for GF(2^n)
    --
-   Carry_Table : array(Positive range <>) of Largest_Basic_Type :=
-     (1 => 1,   2 => 3,   3 => 3,
-      4 => 3,   5 => 5,   6 => 27,
-      7 => 3,   8 => 29,  9 => 17,
-      10 => 2#0110_1111#,  11 => 2#0101#,
-      12 => 2#1110_1011#,  13 => 2#0001_1011#,
-      14 => 2#1010_1001#,  15 => 2#0011_0101#,
-      16 => 2#0010_1101#,
-      --
-      -- Warning: GF(2^n) with n>16 still untested
-      --
-      17 => 2#1001#,
-      18 => 2#0001_0100_0000_0011#,
-      19 => 2#0010_0111#,
-      20 => 2#0110_1111_0011#,
-      21 => 2#0110_0101#,
-      22 => 2#0001_1111_0110_0001#,
-      23 => 2#0010_0001#,
-      24 => 2#0001_1110_0110_1010_1001#,
-      25 => 2#0001_0100_0101#,
-      26 => 2#0100_0101_1101_0011#,
-      27 => 2#0001_0110_1010_1101#,
-      28 => 2#0010_0000_1110_0101#,
-      29 => 2#0101#,
-      30 => 2#0011_0010_1000_1010_1111#,
-      31 => 2#1001#,
-      32 => 2#1000_0010_1001_1001#,
-      33 => 2#0011_1101_0100_1001#,
-      34 => 2#0001_1001_1001_1111_0111#,
-      35 => 2#1100_1010_0101#,
-      36 => 2#1101_1010_0110_0001_0110_0011#,
-      37 => 2#0011_1111#,
-      38 => 2#0100_0111_0010_0111#,
-      39 => 2#1001_1110_1110_0101#,
-      40 => 2#1010_0101_1011_0001_0010_1011#,
-      41 => 2#1001#,
-      42 => 2#0100_0111_0001_0100_0001_1010_0110_0111#,
-      43 => 2#0101_1001#,
-      44 => 2#0001_0000_1011_0000_0000_0001_1011#,
-      45 => 2#0001_0010_1101_1000_0100_0001#,
-      46 => 2#1011_0010_0100_0000_0000_0001#,
-      47 => 2#0010_0001#,
-      48 => 2#0010_1000_0010_0001_1101_1000_1001#,
-      49 => 2#0101_0101_1111#,
-      50 => 2#0011_1000_0000_1011_0111_0111_0101_0101#,
-      51 => 2#0001_1001_0010_0100_0001#,
-      52 => 2#0001_1110_1010_0010_1100_0100_1001_0011#,
-      53 => 2#0100_0111#,
-      54 => 2#0101_1110_1010_0010_0111_1010_0000_1001_0111#,
-      55 => 2#1110_1001_0001#,
-      56 => 2#0010_0100_0100_0100_1000_0110_1011_0001_1101#,
-      57 => 2#0010_1001_0010_1101_0111_1111#,
-      58 => 2#1010_0111_0100_0101_0001_1101_1110_1011#,
-      59 => 2#0111_1011#,
-      60 => 2#0011_0110_1001_0111_0100_0110_0100_1010_0001_0001_0011_1101#,
-      61 => 2#0010_0111#,
-      62 => 2#0001_0111_1111_0011_1111_0111_0000_0100_0011#,
-      63 => 2#0001_1100_0011_1000_1011_0001_1111#,
-      64 => 2#0010_0100_0111_1111_0100_0011_1100_1011_0111#);
+   Carry_Table : array (Positive range <>) of Largest_Basic_Type :=
+                   (1  => 1,   2 => 3,   3 => 3,
+                    4  => 3,   5 => 5,   6 => 27,
+                    7  => 3,   8 => 29,  9 => 17,
+                    10 => 2#0110_1111#,  11 => 2#0101#,
+                    12 => 2#1110_1011#,  13 => 2#0001_1011#,
+                    14 => 2#1010_1001#,  15 => 2#0011_0101#,
+                    16 => 2#0010_1101#,
+                    --
+                    -- Warning: GF(2^n) with n>16 still untested
+                    --
+                    17 => 2#1001#,
+                    18 => 2#0001_0100_0000_0011#,
+                    19 => 2#0010_0111#,
+                    20 => 2#0110_1111_0011#,
+                    21 => 2#0110_0101#,
+                    22 => 2#0001_1111_0110_0001#,
+                    23 => 2#0010_0001#,
+                    24 => 2#0001_1110_0110_1010_1001#,
+                    25 => 2#0001_0100_0101#,
+                    26 => 2#0100_0101_1101_0011#,
+                    27 => 2#0001_0110_1010_1101#,
+                    28 => 2#0010_0000_1110_0101#,
+                    29 => 2#0101#,
+                    30 => 2#0011_0010_1000_1010_1111#,
+                    31 => 2#1001#,
+                    32 => 2#1000_0010_1001_1001#,
+                    33 => 2#0011_1101_0100_1001#,
+                    34 => 2#0001_1001_1001_1111_0111#,
+                    35 => 2#1100_1010_0101#,
+                    36 => 2#1101_1010_0110_0001_0110_0011#,
+                    37 => 2#0011_1111#,
+                    38 => 2#0100_0111_0010_0111#,
+                    39 => 2#1001_1110_1110_0101#,
+                    40 => 2#1010_0101_1011_0001_0010_1011#,
+                    41 => 2#1001#,
+                    42 => 2#0100_0111_0001_0100_0001_1010_0110_0111#,
+                    43 => 2#0101_1001#,
+                    44 => 2#0001_0000_1011_0000_0000_0001_1011#,
+                    45 => 2#0001_0010_1101_1000_0100_0001#,
+                    46 => 2#1011_0010_0100_0000_0000_0001#,
+                    47 => 2#0010_0001#,
+                    48 => 2#0010_1000_0010_0001_1101_1000_1001#,
+                    49 => 2#0101_0101_1111#,
+                    50 => 2#0011_1000_0000_1011_0111_0111_0101_0101#,
+                    51 => 2#0001_1001_0010_0100_0001#,
+                    52 => 2#0001_1110_1010_0010_1100_0100_1001_0011#,
+                    53 => 2#0100_0111#,
+                    54 => 2#0101_1110_1010_0010_0111_1010_0000_1001_0111#,
+                    55 => 2#1110_1001_0001#,
+                    56 => 2#0010_0100_0100_0100_1000_0110_1011_0001_1101#,
+                    57 => 2#0010_1001_0010_1101_0111_1111#,
+                    58 => 2#1010_0111_0100_0101_0001_1101_1110_1011#,
+                    59 => 2#0111_1011#,
+                    60 => 2#0011_0110_1001_0111_0100_0110_0100_1010_0001_0001_0011_1101#,
+                    61 => 2#0010_0111#,
+                    62 => 2#0001_0111_1111_0011_1111_0111_0000_0100_0011#,
+                    63 => 2#0001_1100_0011_1000_1011_0001_1111#,
+                    64 => 2#0010_0100_0111_1111_0100_0011_1100_1011_0111#);
 
 
-   Overflow_Mask : constant Galois := 2**(Exponent-1);
-   Carry_Mask    : constant Galois := Galois(Carry_Table(Exponent));
+   Overflow_Mask : constant Galois := 2 ** (Exponent - 1);
+   Carry_Mask    : constant Galois := Galois (Carry_Table (Exponent));
 
    function Has_Degree (X   : Galois;
                         Deg : Natural)
-                       return Boolean is
+                        return Boolean is
    begin
       -- Put_Line("D=" & Integer'Image(Deg));
       if (Deg >= 64) then
@@ -156,21 +155,21 @@ package body Gf_2p_Varsize is
          -- My_Io.Put(Item => not Galois(2**Deg-1), Base => 2);
          -- Put(" !!=");
          -- My_Io.Put(Item => X and not Galois(2**Deg-1), Base => 2);
-         return (X and not Galois(2**Deg-1))=2**Deg;
+         return (X and not Galois (2 ** Deg - 1)) = 2 ** Deg;
       end if;
    end Has_Degree;
 
    function Degree (X     : Galois;
                     Bound : Positive := Exponent)
-                   return Natural is
-      Mask   : Largest_Basic_Type := 2**Bound;
-      Tmp    : Largest_Basic_Type := Largest_Basic_Type(X);
+                    return Natural is
+      Mask   : Largest_Basic_Type := 2 ** Bound;
+      Tmp    : Largest_Basic_Type := Largest_Basic_Type (X);
       Result : Natural := Bound;
    begin
       -- Put_Line("b=" & Integer'Image(Bound) & "x=" & Image(X));
-      pragma Assert (Mask /= Largest_Basic_Type(Zero));
+      pragma Assert (Mask /= Largest_Basic_Type (Zero));
       pragma Assert (X /= Zero);
-      while (Mask and Tmp) = Largest_Basic_Type(Zero) loop
+      while (Mask and Tmp) = Largest_Basic_Type (Zero) loop
          Result := Result - 1;
          Mask   := Shift_Right (Mask, 1);
       end loop;
@@ -185,19 +184,19 @@ package body Gf_2p_Varsize is
    -- Conversion from/to Integers --
    ---------------------------------
 
-   function To_Int(X: Galois) return Interfaces.Unsigned_64 is
+   function To_Int (X : Galois) return Interfaces.Unsigned_64 is
    begin
-      return Interfaces.Unsigned_64(X);
+      return Interfaces.Unsigned_64 (X);
    end To_Int;
 
-   function To_Galois(X: Interfaces.Unsigned_64) return Galois is
+   function To_Galois (X : Interfaces.Unsigned_64) return Galois is
    begin
-      return Galois(X);
+      return Galois (X);
    end To_Galois;
 
-   function To_Galois(X: Integer) return Galois is
+   function To_Galois (X : Integer) return Galois is
    begin
-      return Galois(X);
+      return Galois (X);
    end To_Galois;
 
 
@@ -206,17 +205,17 @@ package body Gf_2p_Varsize is
    -- Sum, difference and unary minus --
    -------------------------------------
 
-   function "+"(Left, Right: Galois) return Galois is
+   function "+" (Left, Right : Galois) return Galois is
    begin
       return Left xor Right;
    end "+";
 
-   function "-"(Left, Right: Galois) return Galois is
+   function "-" (Left, Right : Galois) return Galois is
    begin
       return Left xor Right;
    end "-";
 
-   function "-"(X: Galois) return Galois is
+   function "-" (X : Galois) return Galois is
    begin
       return X;
    end "-";
@@ -225,25 +224,39 @@ package body Gf_2p_Varsize is
    -- Logarithm and exponential --
    -------------------------------
 
-   function Gf_Log(X: Galois) return Natural is
+   function Gf_Log (X : Galois) return Natural is
    begin
-      if (X=0) then
+      if (X = 0) then
          raise Numeric_Error;
       else
-         return Log_Table(Positive(X));
+         return Log_Table (Positive (X));
       end if;
    end Gf_Log;
-   pragma Inline(GF_Log);
+   pragma Inline (GF_Log);
 
-   function Gf_Exp(X: Integer) return Galois is
+   function Gf_Exp (X : Integer) return Galois is
    begin
-      if (X not in Exp_Table'range) then
-         return Exp_Table(X mod (Exp_Table'Last+1));
+      if (X not in Exp_Table'Range) then
+         return Exp_Table (X mod (Exp_Table'Last + 1));
       else
-         return Exp_Table(X);
+         return Exp_Table (X);
       end if;
    end Gf_Exp;
-   pragma Inline(GF_Exp);
+   pragma Inline (GF_Exp);
+
+   function Shift_Right (X : Galois) return Galois
+   is
+      use Interfaces;
+   begin
+      return Galois (Shift_Right (Unsigned_64 (X), 1));
+   end Shift_Right;
+
+   function Shift_Left (X : Galois) return Galois
+   is
+      use Interfaces;
+   begin
+      return Galois (Shift_Left (Unsigned_64 (X), 1));
+   end Shift_Left;
 
    ----------------------------------
    -- Product via "long" algorithm --
@@ -272,20 +285,21 @@ package body Gf_2p_Varsize is
       --
 
       if (X and Overflow_Mask) = 0 then
-         return Galois (Shift_Left (Unsigned_64 (X), 1));
+         return Shift_Left (X);
       else
-         return Galois (Shift_Left (Unsigned_64 (X and not Overflow_Mask), 1)) xor Carry_Mask;
+         return Shift_Left (X and not Overflow_Mask) xor Carry_Mask;
       end if;
    end Gf_Single_Left_Shift;
+
    pragma Inline (Gf_Single_Left_Shift);
 
    function Gf_Left_Shift (X      : Galois;
                            Amount : Natural := 1)
-                          return Galois is
+                           return Galois is
       My_X : Galois := X;
    begin
-      for I in 1..Amount loop
-         My_X := Gf_Single_Left_Shift(My_X);
+      for I in 1 .. Amount loop
+         My_X := Gf_Single_Left_Shift (My_X);
       end loop;
 
       return My_X;
@@ -314,8 +328,8 @@ package body Gf_2p_Varsize is
          end if;
 
          -- Move the coefficient of x^k of Right in the LSB
-         My_Right := Galois (Shift_Right (Unsigned_64 (My_Right), 1));
-         My_Left  := Gf_Single_Left_Shift(My_Left);
+         My_Right := Shift_Right (My_Right);
+         My_Left  := Gf_Single_Left_Shift (My_Left);
       end loop;
 
       return Result;
@@ -323,25 +337,25 @@ package body Gf_2p_Varsize is
 
    function GF_Table_Product (Left, Right : Galois) return Galois is
    begin
-      return Gf_Exp(Gf_Log(Left)+Gf_Log(Right));
+      return Gf_Exp (Gf_Log (Left)+Gf_Log (Right));
    end GF_Table_Product;
 
    -------------------------------------------------
    -- Multiplicative inverse via "long" algorithm --
    -------------------------------------------------
 
-   function Gf_Long_Inv(X: Galois) return Galois is
-      type Matrix_Type is array (1..2, 1..3) of Galois;
+   function Gf_Long_Inv (X : Galois) return Galois is
+      type Matrix_Type is array (1 .. 2, 1 .. 3) of Galois;
 
       use Interfaces;
 
-      procedure Swap(M : in out Matrix_Type) is
+      procedure Swap (M : in out Matrix_Type) is
          Tmp : Galois;
       begin
-         for I in M'Range(2) loop
-            Tmp     := M (1,I);
-            M (1,I) := M (2,I);
-            M (2,I) := Tmp;
+         for I in M'Range (2) loop
+            Tmp     := M (1, I);
+            M (1, I) := M (2, I);
+            M (2, I) := Tmp;
          end loop;
       end;
       pragma Inline (Swap);
@@ -349,15 +363,15 @@ package body Gf_2p_Varsize is
       procedure Combine_Rows (M     : in out Matrix_Type;
                               Shift : in     Natural) is
       begin
-         for I in M'Range(2) loop
-            M(2,I) := M(2,I) xor Gf_Left_Shift(M(1,I), Shift);
+         for I in M'Range (2) loop
+            M (2, I) := M (2, I) xor Gf_Left_Shift (M (1, I), Shift);
          end loop;
       end Combine_Rows;
       pragma Inline (Combine_Rows);
 
       Matrix  : Matrix_Type;
       Tmp_Deg : Positive;
-      Deg     : array (1..2) of Natural;
+      Deg     : array (1 .. 2) of Natural;
    begin
       if (X = Zero) then
          raise Numeric_Error;
@@ -429,28 +443,28 @@ package body Gf_2p_Varsize is
       --        [ C  x^(n-d)  1 ]
       --
 
-      Deg(1) := Degree(X, Exponent);
-      Deg(2) := Exponent;
+      Deg (1) := Degree (X, Exponent);
+      Deg (2) := Exponent;
 
       declare
          Tmp : Galois;
       begin
-         Tmp := X and not (2**Deg(1));
+         Tmp := X and not (2 ** Deg (1));
          Tmp := Galois (Shift_Left (Unsigned_64 (Tmp), Deg (2)-Deg (1)));
          Matrix := ( (X,                  One,                Zero),
-                     (Tmp xor Carry_Mask, 2**(Deg(2)-Deg(1)),  One) );
+                     (Tmp xor Carry_Mask, 2 ** (Deg (2)-Deg (1)),  One) );
       end;
 
-      Deg(2) := Degree(Matrix(2,1), Deg(2));
+      Deg (2) := Degree (Matrix (2, 1), Deg (2));
 
-      if (Deg(2) < Deg(1)) then
-         Swap(Matrix);
-         Tmp_Deg := Deg(1);
-         Deg(1)  := Deg(2);
-         Deg(2)  := Tmp_Deg;
+      if (Deg (2) < Deg (1)) then
+         Swap (Matrix);
+         Tmp_Deg := Deg (1);
+         Deg (1)  := Deg (2);
+         Deg (2)  := Tmp_Deg;
       end if;
 
-      while Matrix(1,1) /= One loop
+      while Matrix (1, 1) /= One loop
          --
          -- INVARIANT:
          --   Here the following conditions hold
@@ -459,47 +473,47 @@ package body Gf_2p_Varsize is
          --     2. Degree(k,1) = Deg(k)
          --     3. Deg(2) >= Deg(1)
          --
-         pragma Assert (Matrix(1,1) /= One
-                          and Deg(2) >= Deg(1)
-                          and Has_Degree(Matrix(1,1), Deg(1))
-                          and Has_Degree(Matrix(2,1), Deg(2)),
+         pragma Assert (Matrix (1, 1) /= One
+                        and Deg (2) >= Deg (1)
+                        and Has_Degree (Matrix (1, 1), Deg (1))
+                        and Has_Degree (Matrix (2, 1), Deg (2)),
                         "Invariant does not hold in Long_Inv");
 
-         Combine_Rows (Matrix, Deg(2)-Deg(1));
+         Combine_Rows (Matrix, Deg (2)-Deg (1));
 
-         Tmp_Deg := Deg(2);
+         Tmp_Deg := Deg (2);
          -- Put_Line("44x X=" & Image(X)
          --            & " 1->" & Image(Matrix(1,1))
          --            & " 2->" & Image(Matrix(2,1)) );
-         Deg(2)  := Degree (Matrix(2,1), Deg(2));
+         Deg (2)  := Degree (Matrix (2, 1), Deg (2));
 
-         pragma Assert (Tmp_Deg > Deg(2),
+         pragma Assert (Tmp_Deg > Deg (2),
                         "Non-decreasing degree");
 
 
-         if (Deg(2) < Deg(1)) then
-            Swap(Matrix);
-            Tmp_Deg := Deg(1);
-            Deg(1)  := Deg(2);
-            Deg(2)  := Tmp_Deg;
+         if (Deg (2) < Deg (1)) then
+            Swap (Matrix);
+            Tmp_Deg := Deg (1);
+            Deg (1)  := Deg (2);
+            Deg (2)  := Tmp_Deg;
          end if;
       end loop;
 
-      pragma Assert (X*Matrix(1,2) = One);
+      pragma Assert (X * Matrix (1, 2) = One);
 
       return Matrix (1, 2);
    end Gf_Long_Inv;
 
    function GF_Table_Inv (X : Galois) return Galois is
    begin
-      return Gf_Exp(-Gf_Log(X));
+      return Gf_Exp (-Gf_Log (X));
    end GF_Table_Inv;
 
    -----------------------------
    -- Multiplication operator --
    -----------------------------
 
-   function "*"(Left, Right: Galois) return Galois is
+   function "*" (Left, Right : Galois) return Galois is
    begin
       --
       -- If the field is small enough, this function uses the
@@ -507,41 +521,24 @@ package body Gf_2p_Varsize is
       -- procedure.
       --
 
-      if (Left = 0 or Right=0) then
+      if (Left = 0 or Right = 0) then
          return 0;
       else
          return Product_Callback (Left, Right);
       end if;
-
-      -- if (Log_Table /= null) then
-      --    if (Left = 0 or Right=0) then
-      --       -- Avoid computing the log of zero
-      --       return 0;
-      --    else
-      --       return Gf_Exp(Gf_Log(Left)+Gf_Log(Right));
-      --    end if;
-      -- else
-      --    return Gf_Long_Product(Left, Right);
-      -- end if;
    end "*";
 
    ----------------------------
    -- Multiplicative inverse --
    ----------------------------
 
-   function Inv(X: Galois) return Galois is
+   function Inv (X : Galois) return Galois is
    begin
       if (X = 0) then
          raise Numeric_Error;
       end if;
 
-      return Inverse_Callback(X);
-
-      -- if (Log_Table /= null) then
-      --    return Gf_Exp(-Gf_Log(X));
-      -- else
-      --    return Gf_Long_Inv(X);
-      -- end if;
+      return Inverse_Callback (X);
    end Inv;
 
 
@@ -549,7 +546,7 @@ package body Gf_2p_Varsize is
    -- Division operator --
    -----------------------
 
-   function "/"(Num, Den: Galois) return Galois is
+   function "/" (Num, Den : Galois) return Galois is
    begin
       --
       -- If the field is small enough, this function uses the
@@ -569,10 +566,10 @@ package body Gf_2p_Varsize is
       -- one of the two operands is zero, checking for Num=0 here
       -- avoids the computation of Inv(Den)
       --
-      if (Num=0) then
+      if (Num = 0) then
          return 0;
       else
-         return Num*Inv(Den);
+         return Num * Inv (Den);
       end if;
 
       -- if (Log_Table /= null) then
@@ -587,27 +584,20 @@ package body Gf_2p_Varsize is
    -- Image --
    -----------
 
-   function Image(X: Galois) return String is
+   function Image (X : Galois) return String is
    begin
-      return Interfaces.Unsigned_64'Image(Interfaces.Unsigned_64(X));
+      return Interfaces.Unsigned_64'Image (Interfaces.Unsigned_64 (X));
    end;
 
    --
    -- GF(2^n) is a field: the multiplicative inverse of X exists if
    -- and only if X is non null
    --
-   function Is_Unit(X: Galois) return Boolean is
+   function Is_Unit (X : Galois) return Boolean is
    begin
-      return X/= 0;
+      return X /= 0;
    end Is_Unit;
 begin
-   -- if (Exponent > Carry_Table'Last) then
-   --    raise Numeric_Error;
-   -- else
-   --    Overflow_Mask := 2**(Exponent-1);
-   --    Carry_Mask := Carry_Table(Exponent);
-   -- end if;
-
    if (Exponent > 16 or Small_Footprint) then
       --
       -- Field too big: do not use the logarithm table
@@ -623,28 +613,28 @@ begin
 
       -- Log_table e` indicizzata con gli elementi diversi da
       -- zero di GF(2^p)
-      Log_Table := new Log_Table_T(1..2**Exponent-1);
+      Log_Table := new Log_Table_T (1 .. 2 ** Exponent - 1);
 
       -- Exp_table e` indicizzata con gli interi tra 0 e 2^q-2
-      Exp_Table := new Exp_Table_T(0..2**Exponent-2);
+      Exp_Table := new Exp_Table_T (0 .. 2 ** Exponent - 2);
 
-  Fill_Table:
+      Fill_Table :
       declare
          Generator : Galois := 2;
          Current   : Galois := 1;
       begin
-         for Esp in 0..2**Exponent-2 loop
+         for Esp in 0 .. 2 ** Exponent - 2 loop
             -- LOOP INVARIANT:
             --      Current = Generator**Esp
-            Log_Table(Positive(Current)) := Esp;
-            Exp_Table(Esp) := Current;
+            Log_Table (Positive (Current)) := Esp;
+            Exp_Table (Esp) := Current;
 
             -- Sanity check: Current can be equal to one
             -- if and only if Esp=0
-            pragma Assert((Current = 1) = (Esp = 0),
-                          "Generator^k=1 for k < 2^n-1");
+            pragma Assert ((Current = 1) = (Esp = 0),
+                           "Generator^k=1 for k < 2^n-1");
 
-            Current := Gf_Long_Product(Current, Generator);
+            Current := Gf_Long_Product (Current, Generator);
             -- Here Current = Generator**(Esp+1)
          end loop;
 
@@ -652,18 +642,18 @@ begin
          -- false with true
          if False then
             for I in Log_Table'Range loop
-               Put("Log(");
-               Put(Integer'Image(I));
-               Put(")=");
-               Put(Integer'Image(Log_Table(I)));
+               Put ("Log(");
+               Put (Integer'Image (I));
+               Put (")=");
+               Put (Integer'Image (Log_Table (I)));
                New_Line;
             end loop;
 
             for I in Exp_Table'Range loop
-               Put("Exp(");
-               Put(Integer'Image(I));
-               Put(")=");
-               Put(Integer'Image(Integer(Exp_Table(I))));
+               Put ("Exp(");
+               Put (Integer'Image (I));
+               Put (")=");
+               Put (Integer'Image (Integer (Exp_Table (I))));
                New_Line;
             end loop;
          end if;
