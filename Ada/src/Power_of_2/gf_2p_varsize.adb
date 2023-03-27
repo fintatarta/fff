@@ -144,17 +144,17 @@ package body Gf_2p_Varsize is
 
    function Has_Degree (X   : Galois;
                         Deg : Natural)
+                        return Boolean
+     with
+       Ghost; -- Ghost function: used only in assertion anc contracts
+
+   function Has_Degree (X   : Galois;
+                        Deg : Natural)
                         return Boolean is
    begin
-      -- Put_Line("D=" & Integer'Image(Deg));
       if (Deg >= 64) then
-         -- Put_Line("---D=" & Integer'Image(Deg));
          return False;
       else
-         -- Put("//=");
-         -- My_Io.Put(Item => not Galois(2**Deg-1), Base => 2);
-         -- Put(" !!=");
-         -- My_Io.Put(Item => X and not Galois(2**Deg-1), Base => 2);
          return (X and not Galois (2 ** Deg - 1)) = 2 ** Deg;
       end if;
    end Has_Degree;
@@ -244,18 +244,18 @@ package body Gf_2p_Varsize is
    end Gf_Exp;
    pragma Inline (GF_Exp);
 
-   function Shift_Right (X : Galois) return Galois
+   function Shift_Right (X : Galois; N : Natural := 1) return Galois
    is
       use Interfaces;
    begin
       return Galois (Shift_Right (Unsigned_64 (X), 1));
    end Shift_Right;
 
-   function Shift_Left (X : Galois) return Galois
+   function Shift_Left (X : Galois; N : Natural := 1) return Galois
    is
       use Interfaces;
    begin
-      return Galois (Shift_Left (Unsigned_64 (X), 1));
+      return Galois (Shift_Left (Unsigned_64 (X), N));
    end Shift_Left;
 
    ----------------------------------
@@ -296,16 +296,16 @@ package body Gf_2p_Varsize is
    function Gf_Left_Shift (X      : Galois;
                            Amount : Natural := 1)
                            return Galois is
-      My_X : Galois := X;
+      Result : Galois := X;
    begin
       for I in 1 .. Amount loop
-         My_X := Gf_Single_Left_Shift (My_X);
+         Result := Gf_Single_Left_Shift (Result);
       end loop;
 
-      return My_X;
+      return Result;
    end Gf_Left_Shift;
 
-   function Gf_Long_Product (Left, Right : Galois) return Galois is
+   function Long_Product (Left, Right : Galois) return Galois is
       use Interfaces;
 
       Result     : Galois := 0;
@@ -333,18 +333,18 @@ package body Gf_2p_Varsize is
       end loop;
 
       return Result;
-   end Gf_Long_Product;
+   end Long_Product;
 
-   function GF_Table_Product (Left, Right : Galois) return Galois is
+   function Lookup_Table_Product (Left, Right : Galois) return Galois is
    begin
       return Gf_Exp (Gf_Log (Left)+Gf_Log (Right));
-   end GF_Table_Product;
+   end Lookup_Table_Product;
 
    -------------------------------------------------
    -- Multiplicative inverse via "long" algorithm --
    -------------------------------------------------
 
-   function Gf_Long_Inv (X : Galois) return Galois is
+   function Long_Inverse (X : Galois) return Galois is
       type Matrix_Type is array (1 .. 2, 1 .. 3) of Galois;
 
       use Interfaces;
@@ -450,7 +450,7 @@ package body Gf_2p_Varsize is
          Tmp : Galois;
       begin
          Tmp := X and not (2 ** Deg (1));
-         Tmp := Galois (Shift_Left (Unsigned_64 (Tmp), Deg (2)-Deg (1)));
+         Tmp := Shift_Left (Tmp, Deg (2)-Deg (1));
          Matrix := ( (X,                  One,                Zero),
                      (Tmp xor Carry_Mask, 2 ** (Deg (2)-Deg (1)),  One) );
       end;
@@ -502,12 +502,12 @@ package body Gf_2p_Varsize is
       pragma Assert (X * Matrix (1, 2) = One);
 
       return Matrix (1, 2);
-   end Gf_Long_Inv;
+   end Long_Inverse;
 
-   function GF_Table_Inv (X : Galois) return Galois is
+   function Lookup_Table_Inv (X : Galois) return Galois is
    begin
       return Gf_Exp (-Gf_Log (X));
-   end GF_Table_Inv;
+   end Lookup_Table_Inv;
 
    -----------------------------
    -- Multiplication operator --
@@ -571,12 +571,6 @@ package body Gf_2p_Varsize is
       else
          return Num * Inv (Den);
       end if;
-
-      -- if (Log_Table /= null) then
-      --    return Gf_Exp(Gf_Log(Num)-Gf_Log(Den));
-      -- else
-      --    return Gf_Long_Product(Num, Gf_Long_Inv(Den));
-      -- end if;
    end "/";
 
 
@@ -584,19 +578,15 @@ package body Gf_2p_Varsize is
    -- Image --
    -----------
 
-   function Image (X : Galois) return String is
-   begin
-      return Interfaces.Unsigned_64'Image (Interfaces.Unsigned_64 (X));
-   end;
+   function Image (X : Galois) return String
+   is (Galois'Image (X));
 
    --
    -- GF(2^n) is a field: the multiplicative inverse of X exists if
    -- and only if X is non null
    --
-   function Is_Unit (X : Galois) return Boolean is
-   begin
-      return X /= 0;
-   end Is_Unit;
+   function Is_Unit (X : Galois) return Boolean
+   is  (X /= 0);
 begin
    if (Exponent > 16 or Small_Footprint) then
       --
@@ -604,8 +594,8 @@ begin
       --
       Log_Table := null;
       Exp_Table := null;
-      Product_Callback := GF_Long_Product'Access;
-      Inverse_Callback := GF_Long_Inv'Access;
+      Product_Callback := Long_Product'Access;
+      Inverse_Callback := Long_Inverse'Access;
    else
       --
       -- GF(2^n) is not too big: create the Log/Exp tables
@@ -634,7 +624,7 @@ begin
             pragma Assert ((Current = 1) = (Esp = 0),
                            "Generator^k=1 for k < 2^n-1");
 
-            Current := Gf_Long_Product (Current, Generator);
+            Current := Long_Product (Current, Generator);
             -- Here Current = Generator**(Esp+1)
          end loop;
 
@@ -659,8 +649,8 @@ begin
          end if;
       end Fill_Table;
 
-      Product_Callback := GF_Table_Product'Access;
-      Inverse_Callback := GF_Table_Inv'Access;
+      Product_Callback := Lookup_Table_Product'Access;
+      Inverse_Callback := Lookup_Table_Inv'Access;
    end if;
 
 end Gf_2p_Varsize;
