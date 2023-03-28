@@ -84,12 +84,13 @@ package Generic_LUP is
                   P : out Matrix)
      with
        Pre =>
-         Is_Square (X) and
-         Have_Equal_Size (X, L) and
-         Have_Equal_Size (X, U) and
-         Have_Equal_Size (X, P),
+         X'Length (1) > 0 and
+         Is_Square (X),
 
          Post =>
+           Have_Equal_Size (X, L) and
+           Have_Equal_Size (X, U) and
+           Have_Equal_Size (X, P) and
            P * X = L * U and
            Is_Permutation (P) and
            Is_Lower_Triangular (L) and
@@ -109,4 +110,6 @@ package Generic_LUP is
          Post =>
            Have_Equal_Size (B, Solve_Linear_System'Result) and
            A * Solve_Linear_System'Result = B;
+
+   Singular_Matrix : exception;
 end Generic_LUP;
