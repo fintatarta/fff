@@ -162,8 +162,36 @@ package body Generic_LUP is
    end Identity;
 
 
+   --------------
+   -- Identity --
+   --------------
+
    function Identity (Template : Matrix) return Matrix
    is (Identity (Row_Range (Template)));
+
+   ----------------------
+   -- Reverse_Identity --
+   ----------------------
+
+   function Reverse_Identity (Template : Matrix) return Matrix
+   is
+      Rng : constant Index_Range := Row_Range (Template);
+      Cursor : Index_Type;
+   begin
+      return I : Matrix (Rng.First .. Rng.Last, Rng.First .. Rng.Last) :=
+        (others => (others => Zero)) do
+
+         Cursor := Rng.Last;
+
+         for Row in I'Range (1) loop
+            I (Row, Cursor) := One;
+
+            if Cursor /= Index_Type'First then
+               Cursor := Index_Type'Pred (Cursor);
+            end if;
+         end loop;
+      end return;
+   end Reverse_Identity;
 
 
    ---------
@@ -312,6 +340,7 @@ package body Generic_LUP is
                else
                   if Applied_Actions.Is_Empty then
                      P := Acts.To_Matrix (Action);
+                     return;
 
                   else
                      declare
@@ -383,16 +412,61 @@ package body Generic_LUP is
       return Result;
    end Determinant;
 
+
+   ---------------------------
+   -- Solve_Upper_Triangual --
+   ---------------------------
+
+   function Solve_Upper_Triangual (U : Matrix; B : Vector) return Vector
+   is
+   begin
+      raise Program_Error;
+      return B;
+   end Solve_Upper_Triangual;
+
+   -------------------------
+   -- Solve_Linear_System --
+   -------------------------
+
    -------------------------
    -- Solve_Linear_System --
    -------------------------
 
    function Solve_Linear_System (A : Matrix; B : Vector) return Vector is
+      U : Matrix (A'Range (1), A'Range (2));
+      L : Matrix (A'Range (1), A'Range (2));
+      P : Matrix (A'Range (1), A'Range (2));
    begin
-      pragma Compile_Time_Warning
-        (Standard.True, "Solve_Linear_System unimplemented");
-      return
-      raise Program_Error with "Unimplemented function Solve_Linear_System";
+      --
+      --  We want to solve A*x = b.  We decompose A as P*A = L*U and the
+      --  system becomes
+      --
+      --       P*b = c = P*A*x = L*U*x
+      --
+      --  Write L = J*V*J, with V upper triangualr, and rewrite the system as
+      --
+      --       J*P*b = V*J*U*x = V*y
+      --       y = J*U*x  <==> J*y = U*x
+      --
+      --  Therefore, the solution can be written as
+      --
+      --      y = Inv(V)*(J*P*b),
+      --      x = Inv(U)*(J*y)
+      --
+      -- where Inv(V)*(J*P*b) and Inv(U)*(J*y) can be computed using
+      -- Solve_Upper_Trianuglar
+      --
+      LUP (X => A,
+           L => L,
+           U => U,
+           P => P);
+
+      declare
+         J : constant Matrix := Reverse_Identity (U);
+         Y : constant Vector := Solve_Upper_Triangual (J * L * J, J * P * B);
+      begin
+         return Solve_Upper_Triangual (U, J * Y);
+      end;
    end Solve_Linear_System;
 
 end Generic_LUP;

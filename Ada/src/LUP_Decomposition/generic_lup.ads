@@ -102,9 +102,9 @@ package Generic_LUP is
      with
        Pre =>
          Is_Square (Template),
-       Post =>
-         Row_Range (Identity'Result) = Row_Range (Template) and
-         Is_Square (Identity'Result);
+         Post =>
+           Row_Range (Identity'Result) = Row_Range (Template) and
+           Is_Square (Identity'Result);
 
 
    procedure LUP (X : Matrix;
@@ -129,6 +129,20 @@ package Generic_LUP is
    function Determinant (X : Matrix) return Field_Type
      with
        Pre => Is_Square (X);
+
+   function Solve_Upper_Triangual (U : Matrix; B : Vector) return Vector
+     with
+       Pre =>
+         Is_Square (U) and
+         Is_Upper_Triangular (U) and
+         (for all I in U'Range (1) => U (I, I) /= Zero) and
+         U'First (1) = B'First (1) and
+         U'Last (1) = B'Last (1),
+
+         Post =>
+           Have_Equal_Size (B, Solve_Upper_Triangual'Result) and
+           U * Solve_Upper_Triangual'Result = B;
+
 
    function Solve_Linear_System (A : Matrix; B : Vector) return Vector
      with
