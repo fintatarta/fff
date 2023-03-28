@@ -14,6 +14,20 @@ generic
    type Matrix is array (Index_Type range <>, Index_Type range <>) of Field_Type;
    type Vector is array (Index_Type range <>) of Field_Type;
 package Generic_LUP is
+   type Index_Range is private;
+
+   function Row_Range (X : Matrix) return Index_Range
+     with
+       Post =>
+         X'First (1) = First (Row_Range'Result) and
+         X'Last (1) = Last (Row_Range'Result);
+
+   function First (X : Index_Range) return Index_Type;
+   function Last  (X : Index_Range) return Index_Type;
+
+   function Is_In (X : Index_Type; R : Index_Range) return Boolean;
+
+
    function Is_Square (A : Matrix) return Boolean
    is (A'First (1) = A'First (2) and A'Last (1) = A'Last (2))
      with Ghost;
@@ -77,6 +91,21 @@ package Generic_LUP is
          X'First (2) = Transpose'Result'First (1) and
          X'Last (2)  = Transpose'Result'Last (1);
 
+   function Identity (Rng : Index_Range) return Matrix
+     with
+       Post =>
+         Row_Range (Identity'Result) = Rng and
+         Is_Square (Identity'Result);
+
+
+   function Identity (Template : Matrix) return Matrix
+     with
+       Pre =>
+         Is_Square (Template),
+       Post =>
+         Row_Range (Identity'Result) = Row_Range (Template) and
+         Is_Square (Identity'Result);
+
 
    procedure LUP (X : Matrix;
                   L : out Matrix;
@@ -112,4 +141,14 @@ package Generic_LUP is
            A * Solve_Linear_System'Result = B;
 
    Singular_Matrix : exception;
+
+private
+   type Index_Range is
+      record
+         First : Index_Type;
+         Last  : Index_Type;
+      end record
+     with
+       Type_Invariant => (First <= Last);
+
 end Generic_LUP;

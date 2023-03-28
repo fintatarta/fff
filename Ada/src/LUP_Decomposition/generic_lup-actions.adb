@@ -1,27 +1,6 @@
 pragma Ada_2012;
 package body Generic_Lup.Actions is
 
-   ---------------
-   -- Row_Range --
-   ---------------
-
-   function Row_Range (X : Matrix) return Index_Range
-   is (Index_Range'(First => X'First (1),
-                    Last  => X'Last (1)));
-
-
-   function First (X : Index_Range) return Index_Type
-   is (X.First);
-
-   function Last  (X : Index_Range) return Index_Type
-   is (X.Last);
-
-   -----------
-   -- Is_In --
-   -----------
-
-   function Is_In (X : Index_Type; R : Index_Range) return Boolean
-   is (X in R.First .. R.Last);
 
    --------------------
    -- Is_Permutation --
@@ -39,21 +18,6 @@ package body Generic_Lup.Actions is
    is (X.First = Y.First and X.Last = Y.Last);
 
 
-   --------------
-   -- Identity --
-   --------------
-
-   function Identity (Rng : Index_Range) return Matrix
-   is
-   begin
-      return I : Matrix (Rng.First .. Rng.Last, Rng.First .. Rng.Last) :=
-        (others => (others => Zero)) do
-
-         for Row in I'Range (1) loop
-            I (Row, Row) := One;
-         end loop;
-      end return;
-   end Identity;
    ---------------
    -- Swap_Rows --
    ---------------

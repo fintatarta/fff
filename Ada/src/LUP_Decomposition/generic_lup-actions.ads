@@ -2,19 +2,6 @@
 private
 generic
 package Generic_Lup.Actions is
-   type Index_Range is private;
-
-   function Row_Range (X : Matrix) return Index_Range
-     with
-       Post =>
-         X'First (1) = First (Row_Range'Result) and
-         X'Last (1) = Last (Row_Range'Result);
-
-   function First (X : Index_Range) return Index_Type;
-   function Last  (X : Index_Range) return Index_Type;
-
-   function Is_In (X : Index_Type; R : Index_Range) return Boolean;
-
 
    type Action_Type (<>) is private;
 
@@ -63,13 +50,6 @@ package Generic_Lup.Actions is
    function To_Matrix (X : Action_Type) return Matrix;
 
 private
-   type Index_Range is
-      record
-         First : Index_Type;
-         Last  : Index_Type;
-      end record
-     with
-       Type_Invariant => (First <= Last);
 
    type Action_Class is (Permutation, Sum);
 
