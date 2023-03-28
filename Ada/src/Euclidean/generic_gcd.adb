@@ -28,11 +28,11 @@ package body Generic_GCD is
       Beta  : out Euclidean_Ring;
       Gcd   : out Euclidean_Ring)
    is
-      Status_Matrix : array (1 .. 2, 1 .. 3) of Euclidean_Ring :=
-                        (1 => (One, Zero, A),
-                         2 => (Zero, One, B));
+      type Status_Matrix is array (1 .. 2, 1 .. 3) of Euclidean_Ring;
 
-      procedure Swap_Rows is
+      Status : Status_Matrix;
+
+      procedure Swap_Rows (Status : in out Status_Matrix) is
          procedure Swap (A, B : in out Euclidean_Ring) is
             Tmp : Euclidean_Ring;
          begin
@@ -41,69 +41,75 @@ package body Generic_GCD is
             B := Tmp;
          end Swap;
       begin
-         for Col in Status_Matrix'Range (2) loop
-            Swap (Status_Matrix (1, Col),
-                  Status_Matrix (2, Col));
+         for Col in Status'Range (2) loop
+            Swap (Status (1, Col), Status (2, Col));
          end loop;
       end Swap_Rows;
 
-      procedure Combine_Rows (Coeff : Euclidean_Ring) is
+      procedure Combine_Rows (Status : in out Status_Matrix;
+                              Coeff  : Euclidean_Ring) is
       begin
-         for Col in Status_Matrix'Range (2) loop
-            Status_Matrix (1, Col) :=
-              Status_Matrix (1, Col) + Coeff * Status_Matrix (2, Col);
+         for Col in Status'Range (2) loop
+            Status (1, Col) := Status (1, Col) + Coeff * Status (2, Col);
          end loop;
       end Combine_Rows;
+
+      function Top (Status : Status_Matrix) return Euclidean_Ring
+      is (Status (1, 3));
+
+      function Bottom (Status : Status_Matrix) return Euclidean_Ring
+      is (Status (2, 3));
+
+      function Is_Ordered (Status : Status_Matrix) return Boolean
+      is (Degree (Top (Status)) >= Degree (Bottom (Status)))
+        with Ghost;
+
+      function Is_Coherent (Status : Status_Matrix) return Boolean
+      is (for all Row in 1 .. 2 =>
+             Status (Row, 3)  = Status (Row, 1) * A + Status (Row, 2) * B)
+        with Ghost;
+
    begin
       if A = Zero or B = Zero then
          raise Constraint_Error;
       end if;
 
-      if Degree (Status_Matrix (1, 3)) < Degree (Status_Matrix (2, 3)) then
-         Swap_Rows;
+      Status := (1 => (One, Zero, A),
+                 2 => (Zero, One, B));
+
+      if Degree (Top (Status) ) < Degree (Bottom (Status)) then
+         Swap_Rows (Status);
       end if;
 
-      pragma Assert (Degree (Status_Matrix (1, 3)) >= Degree (Status_Matrix (2, 3)));
+      pragma Assert (Is_Coherent (Status) and Is_Ordered (Status));
 
-      while Status_Matrix (2, 3) /= Zero loop
-         pragma Loop_Invariant
-           (Degree (Status_Matrix (1, 3)) >= Degree (Status_Matrix (2, 3)));
-
-         pragma Loop_Invariant
-           (Status_Matrix (1, 1) * A + Status_Matrix (1, 2) * B = Status_Matrix (1, 3));
-
-         pragma Loop_Invariant
-           (Status_Matrix (2, 1) * A + Status_Matrix (2, 2) * B = Status_Matrix (2, 3));
+      while Bottom (Status) /= Zero loop
+         pragma Loop_Invariant (Is_Ordered (Status) and Is_Coherent (Status));
+         pragma Loop_Variant (Decreases => Degree (Top (Status)));
 
          declare
-            M : constant Euclidean_Ring :=
-                  Status_Matrix (1, 3) mod Status_Matrix (2, 3);
+            M : constant Euclidean_Ring := Top (Status) mod Bottom (Status);
 
             Quotient : constant Euclidean_Ring :=
-                         (Status_Matrix (1, 3) + (-M)) / Status_Matrix (2, 3);
+                         (Top (Status) + (-M)) / Bottom (Status);
          begin
-            pragma Assert (Degree (M) < Degree (Status_Matrix (2, 3)));
-
             pragma Assert
-              (Status_Matrix (1, 3) = Quotient * Status_Matrix (2, 3) + M);
+              (Top (Status) = Quotient * Bottom (Status) + M and
+                   Degree (M) < Degree (Bottom (Status)));
 
-            Combine_Rows (-Quotient);
+            Combine_Rows (Status, -Quotient);
 
-            pragma Assert (Status_Matrix (1, 3) = M);
+            pragma Assert (Top (Status) = M);
 
-            Swap_Rows;
+            Swap_Rows (Status);
          end;
       end loop;
 
-      pragma Assert
-        (Status_Matrix (1, 1) * A + Status_Matrix (1, 2) * B = Status_Matrix (1, 3));
+      pragma Assert (Is_Coherent (Status) and bottom(status) = Zero);
 
-      pragma Assert
-        (Status_Matrix (2, 1) * A + Status_Matrix (2, 2) * B = Zero);
-
-      Alpha := Status_Matrix (1, 1);
-      Beta := Status_Matrix (1, 2);
-      Gcd := Status_Matrix (1, 3);
+      Alpha := Status (1, 1);
+      Beta  := Status (1, 2);
+      Gcd   := Top (Status);
    end GCD;
 
 end Generic_GCD;
