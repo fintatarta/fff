@@ -1,13 +1,10 @@
 pragma Ada_2012;
+with Generic_LUP.Actions;
+with Ada.Containers.Indefinite_Doubly_Linked_Lists;
+
 package body Generic_LUP is
 
-   function Transpose (X : Matrix) return Matrix
-     with
-       Post =>
-         X'First (1) = Transpose'Result'First (2) and
-         X'Last (1)  = Transpose'Result'Last (2) and
-         X'First (2) = Transpose'Result'First (1) and
-         X'Last (2)  = Transpose'Result'Last (1);
+
 
    function Transpose (X : Matrix) return Matrix
    is
@@ -133,6 +130,15 @@ package body Generic_LUP is
 
    procedure LUP (X : Matrix; L : out Matrix; U : out Matrix; P : out Matrix)
    is
+      package Acts is new Actions;
+      use Acts;
+
+      package Action_Lists is
+        new Ada.Containers.Indefinite_Doubly_Linked_Lists (Action_Type);
+
+      Applied_Actions : Action_Lists.List;
+
+      Rng : constant Index_Range := Row_Range (X);
    begin
       pragma Compile_Time_Warning (Standard.True, "LUP unimplemented");
       raise Program_Error with "Unimplemented procedure LUP";

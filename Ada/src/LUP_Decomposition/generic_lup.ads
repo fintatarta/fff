@@ -69,6 +69,14 @@ package Generic_LUP is
            X'First (1) = "*"'Result'First and
            X'Last (1) = "*"'Result'Last;
 
+   function Transpose (X : Matrix) return Matrix
+     with
+       Post =>
+         X'First (1) = Transpose'Result'First (2) and
+         X'Last (1)  = Transpose'Result'Last (2) and
+         X'First (2) = Transpose'Result'First (1) and
+         X'Last (2)  = Transpose'Result'Last (1);
+
 
    procedure LUP (X : Matrix;
                   L : out Matrix;
