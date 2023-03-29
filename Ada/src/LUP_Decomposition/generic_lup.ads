@@ -165,4 +165,10 @@ private
      with
        Type_Invariant => (First <= Last);
 
+   function "-" (X, Y : Field_Type) return Field_Type
+   is (X + (-Y));
+
+   function "/" (X, Y : Field_Type) return Field_Type
+   is (X * Inv (Y));
+
 end Generic_LUP;
