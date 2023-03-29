@@ -395,4 +395,26 @@ package body Generic_LUP is
       raise Program_Error with "Unimplemented function Solve_Linear_System";
    end Solve_Linear_System;
 
+
+   function Back_Substitute (A : Matrix; B : Vector) return Vector
+   is
+      X : Vector (B'Range);
+      Working_B : Vector := B;
+   begin
+      pragma Assert (Is_Upper_Triangular (A));
+
+      for I in reverse X'Range loop
+         if A (I, I) = Zero then
+            raise Singular_Matrix;
+         end if;
+
+         X (I) := Working_B (I) / A (I, I);
+
+         for Row in Working_B'First .. I loop
+            Working_B (Row) := Working_B (Row) - X (I) * A (Row, I);
+         end loop;
+      end loop;
+
+      return X;
+   end Back_Substitute;
 end Generic_LUP;
