@@ -412,6 +412,58 @@ package body Generic_LUP is
       return Result;
    end Determinant;
 
+   ------------
+   -- Column --
+   ------------
+
+   function Column (A : Matrix; Col : Index_Type) return Vector
+   is
+   begin
+
+      return Result : Vector (A'Range (2)) do
+         for Row in Result'Range loop
+            Result (Row) := A (Row, Col);
+         end loop;
+      end return;
+
+   end Column;
+
+   ---------
+   -- "*" --
+   ---------
+
+   function "*" (C : Field_Type; V : Vector) return Vector
+   is
+   begin
+
+      return Result : Vector (V'Range) do
+         for Row in Result'Range loop
+            Result (Row) := C * V (Row);
+         end loop;
+      end return;
+   end "*";
+
+   ---------
+   -- "-" --
+   ---------
+   function "-" (X, Y : Vector) return Vector
+     with
+       Pre => Have_Equal_Size (X, Y);
+
+   function "-" (X, Y : Vector) return Vector
+   is
+   begin
+      if not Have_Equal_Size (X, Y) then
+         raise Constraint_Error;
+      end if;
+
+      return Result : Vector (X'Range) do
+         for Row in Result'Range loop
+            Result (Row) := X (Row)-Y (Row);
+         end loop;
+      end return;
+
+   end "-";
 
    ---------------------------
    -- Solve_Upper_Triangual --
@@ -419,9 +471,22 @@ package body Generic_LUP is
 
    function Solve_Upper_Triangual (U : Matrix; B : Vector) return Vector
    is
+      X         : Vector (B'Range);
+      Working_B : Vector := B;
    begin
-      raise Program_Error;
-      return B;
+      pragma Assert (Is_Upper_Triangular (U));
+
+      for I in reverse X'Range loop
+         if U (I, I) = Zero then
+            raise Singular_Matrix;
+         end if;
+
+         X (I) := Working_B (I) / U (I, I);
+
+         Working_B := Working_B - X (I) * Column (U, I);
+      end loop;
+
+      return X;
    end Solve_Upper_Triangual;
 
    -------------------------
@@ -470,25 +535,4 @@ package body Generic_LUP is
    end Solve_Linear_System;
 
 
-   function Back_Substitute (A : Matrix; B : Vector) return Vector
-   is
-      X : Vector (B'Range);
-      Working_B : Vector := B;
-   begin
-      pragma Assert (Is_Upper_Triangular (A));
-
-      for I in reverse X'Range loop
-         if A (I, I) = Zero then
-            raise Singular_Matrix;
-         end if;
-
-         X (I) := Working_B (I) / A (I, I);
-
-         for Row in Working_B'First .. I loop
-            Working_B (Row) := Working_B (Row) - X (I) * A (Row, I);
-         end loop;
-      end loop;
-
-      return X;
-   end Back_Substitute;
 end Generic_LUP;

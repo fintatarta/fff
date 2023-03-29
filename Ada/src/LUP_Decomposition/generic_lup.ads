@@ -40,8 +40,7 @@ package Generic_LUP is
      with Ghost;
 
    function Have_Equal_Size (A, B : Vector) return Boolean
-   is (A'First = B'First and A'Last = B'Last)
-     with Ghost;
+   is (A'First = B'First and A'Last = B'Last);
 
    function Is_Permutation (X : Matrix) return Boolean
      with
