@@ -35,6 +35,14 @@ package Generic_Matrices is
      with
        Dynamic_Predicate => Square_Matrix.N_Rows = Square_Matrix.N_Cols;
 
+   Empty_Matrix : constant Matrix;
+
+   function Total_Size (X : Matrix) return Natural
+   is (X.N_Rows * X.N_Cols);
+
+   function Is_Empty (X : Matrix) return Boolean
+   is (X.Total_Size = 0);
+
    function Is_Vector (X : Matrix) return Boolean
    is (X.N_Rows = 1 or X.N_Cols = 1);
 
@@ -126,7 +134,7 @@ package Generic_Matrices is
          Reverse_Identity'Result.N_Rows = N_Rows and
          Reverse_Identity'Result.N_Cols = N_Cols;
 
-   function Flip_Lr(X: Matrix) return Matrix
+   function Flip_Lr (X : Matrix) return Matrix
      with
        Post =>
          Flip_Lr'Result.N_Rows = X.N_Rows and
@@ -222,16 +230,21 @@ private
 
    type Matrix is tagged
       record
-         N_Rows : Positive;
-         N_Cols : Positive;
-         Data   : Ring_Vectors.Vector;
+         N_Rows : Natural := 0;
+         N_Cols : Natural := 0;
+         Data   : Ring_Vectors.Vector := Ring_Vectors.Empty_Vector;
       end record
      with
        Type_Invariant => Data.Length = Count_Type (N_Rows * N_Cols);
+
 
    function To_Index (M : Matrix; Row, Col : Index_Type) return Index_Type
    is (Row + (Col - Index_Type'First) * M.N_Rows);
 
    type Reference_Type (Element : not null access Ring_Type) is null record;
+
+   Empty_Matrix : constant Matrix := Matrix'(N_Rows => 0,
+                                             N_Cols => 0,
+                                             Data   => Ring_Vectors.Empty_Vector);
 
 end Generic_Matrices;

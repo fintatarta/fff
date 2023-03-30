@@ -92,17 +92,17 @@ package Generic_LUP is
            Have_Equal_Size (B, Solve_Upper_Triangular'Result) and
            U * Solve_Upper_Triangular'Result = B;
 
-   function Solve_Lower_Triangular (U : Matrix; B : Matrix) return Matrix
+   function Solve_Lower_Triangular (L : Matrix; B : Matrix) return Matrix
      with
        Pre =>
          B.Is_Column_Vector and
-         U.N_Cols = B.N_Rows and
-         Is_Square (U) and
-         Is_Lower_Triangular (U) and
-         (for all I in 1 .. U.N_Rows  => U (I, I) /= Zero),
+         l.N_Cols = B.N_Rows and
+         Is_Square (l) and
+         Is_Lower_Triangular (l) and
+         (for all I in 1 .. l.N_Rows  => l (I, I) /= Zero),
          Post =>
            Have_Equal_Size (B, Solve_Lower_Triangular'Result) and
-           U * Solve_Lower_Triangular'Result = B;
+           l * Solve_Lower_Triangular'Result = B;
 
 
    function Solve_Linear_System (A : Matrix; B : Matrix) return Matrix
