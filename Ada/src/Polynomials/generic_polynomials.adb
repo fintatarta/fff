@@ -3,6 +3,36 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Text_IO; use Ada.Text_IO;
 package body Generic_Polynomials is
 
+   function Constant_Part (X : Polynomial) return Field_Type
+   is (X (0));
+
+   function "<" (X, Y : Polynomial_Degree) return Boolean
+   is (if X = Minus_Infinity then
+          y /= Minus_Infinity
+
+       elsif Y = Minus_Infinity then
+          False
+
+       else
+          Integer (X) < Integer (Y));
+
+   function "+" (X, Y : Polynomial_Degree) return Polynomial_Degree
+   is (if X = Minus_Infinity or Y = Minus_Infinity then
+          Minus_Infinity
+       else
+          Polynomial_Degree(natural(x)+Natural(y)));
+
+   function To_Degree (D : Natural) return Polynomial_Degree
+   is (Polynomial_Degree (D));
+
+   function To_Integer (D : Polynomial_Degree) return Natural
+   is (if D = Minus_Infinity then
+          raise Constraint_Error
+       else
+          Natural (D));
+
+   function Is_Zero (X : Polynomial) return Boolean
+   is (X.Is_A_Constant and then X.Coeffs.First_Element = Field_Zero);
    -------------------
    -- To_Polynomial --
    -------------------
@@ -14,7 +44,7 @@ package body Generic_Polynomials is
          Result.Coeffs.Set_Length (Count_Type (C'Last + 1));
 
          for I in C'Range loop
-            Result.Coeffs (I) := C (I);
+            Result.Coeffs (Exponent_Type (I)) := C (I);
          end loop;
 
          Normalize (Result);
@@ -26,7 +56,7 @@ package body Generic_Polynomials is
    -- Value --
    -----------
 
-   function Value (P : Polynomial; N : Natural) return Field_Type
+   function Value (P : Polynomial; N : Exponent_Type) return Field_Type
    is
    begin
       if N > P.Coeffs.Last_Index then
@@ -59,10 +89,10 @@ package body Generic_Polynomials is
 
    function "+" (X, Y : Polynomial) return Polynomial is
    begin
-      if X = Zero then
+      if X.Is_Zero then
          return Y;
 
-      elsif Y = Zero then
+      elsif Y.Is_Zero then
          return X;
 
       else
@@ -70,16 +100,16 @@ package body Generic_Polynomials is
             use Field_Vectors;
             use Ada.Containers;
 
-            Degree_Result : constant Natural :=
-                              Natural'Max (Degree (X), Degree (Y));
+            Max_Power : constant Exponent_Type :=
+                          To_Exponent (Max (X.Degree, Y.Degree));
 
             Result        : Polynomial :=
                               (Coeffs => To_Vector (New_Item => Field_Zero,
-                                                    Length   => Count_Type (Degree_Result + 1)));
+                                                    Length   => Count_Type (Max_Power + 1)));
          begin
-            --  Put_Line ("$$" & Degree_Result'Image);
+            pragma Assert (Max_Power >= 0);
 
-            for I in 0 .. Degree_Result loop
+            for I in 0 .. Max_Power loop
                Result.Coeffs (I) := X (I) + Y (I);
 
                --  Put_Line ("$$$" & Result.Leading_Power'image);
@@ -128,15 +158,23 @@ package body Generic_Polynomials is
    -- "*" --
    ---------
 
+   ---------
+   -- "*" --
+   ---------
+
    function "*" (X, Y : Polynomial) return Polynomial is
    begin
+      if X.Is_Zero or Y.Is_Zero then
+         return Zero;
+      end if;
+
       return Result : Polynomial := Zero do
 
          declare
             Working_Y : Polynomial := Y;
          begin
-            for N in 0 .. X.Degree loop
-               pragma Assert (Working_Y = Shift (Y, N));
+            for N in 0 .. To_Exponent (X.Degree) loop
+               pragma Assert (Working_Y = Shift (Y, Natural (N)));
 
                Result := Result + X (N) * Working_Y;
 
@@ -152,7 +190,7 @@ package body Generic_Polynomials is
    -------------
 
    function Is_Unit (X : Polynomial) return Boolean
-   is (X.Degree = 0 and then X.Coeffs.First_Element /= Field_Zero);
+   is (X.Is_A_Constant and then x.Coeffs.First_Element /= Field_Zero);
 
    ---------
    -- Inv --
@@ -163,7 +201,7 @@ package body Generic_Polynomials is
       if not X.Is_Unit then
          raise Constraint_Error;
       else
-         return To_Polynomial (Inv (X (0)));
+         return To_Polynomial (Inv (X.Coeffs.First_Element));
       end if;
    end Inv;
 
@@ -198,9 +236,11 @@ package body Generic_Polynomials is
    end Div;
 
    function Leading (X : Polynomial) return Field_Type
-   is (X (X.Degree));
+   is (X.Coeffs.Last_Element);
 
-   function Monomial (C : Field_Type; Exponent : Natural := 1) return Polynomial
+   function Monomial (C        : Field_Type;
+                      Exponent : Exponent_Type)
+                      return Polynomial
    is
       use Ada.Containers;
       use Field_Vectors;
@@ -227,15 +267,14 @@ package body Generic_Polynomials is
    begin
       Quotient := Zero;
 
-      while Working_Num.Leading_Power >= Den.Degree loop
+      while Working_Num.Degree >= Den.Degree loop
          Put_Line (Working_Num.Leading_Power'Image);
          pragma Loop_Variant (Decreases => Working_Num.Leading_Power);
 
-         C := Monomial (Leading (Working_Num) * K, Working_Num.Degree - Den.Degree);
-         Put_Line (">>" & Working_Num.Leading_Power'Image);
-         Put_Line (">>>" & C.Degree'Image & Integer'Image (Degree (C * Den)));
+         C := Monomial (Leading (Working_Num) * K,
+                        Working_Num.Leading_Power - Den.Leading_Power);
 
-         pragma Assert (Degree(C * Den) = Working_Num.Leading_Power);
+         pragma Assert (Degree (C * Den) = Working_Num.Degree);
 
          Quotient := Quotient + C;
 
@@ -301,8 +340,11 @@ package body Generic_Polynomials is
    -- Degree --
    ------------
 
-   function Degree (X : Polynomial) return Natural
-   is (X.Normalize.Coeffs.Last_Index);
+   function Degree (X : Polynomial) return Polynomial_Degree
+   is (if X.Coeffs.Last_Index = 0 and then X (0) = Field_Zero then
+          Minus_Infinity
+       else
+          To_Degree (Integer (X.Coeffs.Last_Index)));
 
    ---------------
    -- Normalize --
@@ -332,7 +374,7 @@ package body Generic_Polynomials is
          return Field_Image (X (0));
       end if;
 
-      for N in 0 .. X.Degree loop
+      for N in 0 .. To_Exponent (X.Degree) loop
          if X (N) /= Field_Zero then
             if Accumulator /= Null_Unbounded_String then
                Accumulator := Accumulator & "+";
@@ -347,7 +389,7 @@ package body Generic_Polynomials is
             end if;
 
             if N > 1 then
-               Accumulator := Accumulator & Exponent_Operator & Integer'Image (N);
+               Accumulator := Accumulator & Exponent_Operator & Exponent_Type'Image (N);
             end if;
          end if;
       end loop;
