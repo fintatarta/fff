@@ -8,7 +8,7 @@ package body Generic_Polynomials is
 
    function "<" (X, Y : Polynomial_Degree) return Boolean
    is (if X = Minus_Infinity then
-          y /= Minus_Infinity
+          Y /= Minus_Infinity
 
        elsif Y = Minus_Infinity then
           False
@@ -20,7 +20,7 @@ package body Generic_Polynomials is
    is (if X = Minus_Infinity or Y = Minus_Infinity then
           Minus_Infinity
        else
-          Polynomial_Degree(natural(x)+Natural(y)));
+          Polynomial_Degree (Natural (X)+Natural (Y)));
 
    function To_Degree (D : Natural) return Polynomial_Degree
    is (Polynomial_Degree (D));
@@ -190,7 +190,7 @@ package body Generic_Polynomials is
    -------------
 
    function Is_Unit (X : Polynomial) return Boolean
-   is (X.Is_A_Constant and then x.Coeffs.First_Element /= Field_Zero);
+   is (X.Is_A_Constant and then X.Coeffs.First_Element /= Field_Zero);
 
    ---------
    -- Inv --
@@ -279,11 +279,8 @@ package body Generic_Polynomials is
          Quotient := Quotient + C;
 
          Working_Num := Working_Num - C * Den;
-         Put_Line (">>>>" & Working_Num.Leading_Power'Image);
 
       end loop;
-
-      Put_Line ("%" & Working_Num.Leading_Power'Image & Den.Degree'Image);
 
       Remainder := Working_Num;
    end Div_Mod;
@@ -324,17 +321,17 @@ package body Generic_Polynomials is
       end if;
    end Shift;
 
-   ---------------
-   -- Normalize --
-   ---------------
-
-   function Normalize (X : Polynomial) return Polynomial
-   is
-   begin
-      return Result : Polynomial := X do
-         Normalize (Result);
-      end return;
-   end Normalize;
+   --  ---------------
+   --  -- Normalize --
+   --  ---------------
+   --
+   --  function Normalize (X : Polynomial) return Polynomial
+   --  is
+   --  begin
+   --     return Result : Polynomial := X do
+   --        Normalize (Result);
+   --     end return;
+   --  end Normalize;
 
    ------------
    -- Degree --

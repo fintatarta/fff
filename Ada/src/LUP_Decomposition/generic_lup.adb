@@ -231,7 +231,6 @@ package body Generic_LUP is
          Applied_Actions : in out Action_Lists.List;
          U               : Matrix)
       is
-         use Acts;
       begin
          L := Identity (U);
          P := Identity (U);
@@ -274,7 +273,6 @@ package body Generic_LUP is
 
       Applied_Actions : Action_Lists.List;
 
-      Rng : constant Index_Range := Row_Range (X);
    begin
       if not Is_Square (X) then
          raise Constraint_Error;
