@@ -32,29 +32,37 @@ package body Generic_LUP is
    -- Is_Permutation --
    --------------------
 
-   function Is_Permutation (X : Matrix) return Boolean is
+   function Is_Permutation (X : Matrix) return Boolean
+   is
       Found_In_Row : Boolean;
-      Found        : array (X'Range (1)) of Boolean := (others => False);
    begin
-      for Row in X'Range (1) loop
-         Found_In_Row := False;
+      if not Is_Square (X) then
+         return False;
+      end if;
 
-         for Col in X'Range (2) loop
-            if X (Row, Col) = One then
-               if Found_In_Row or Found (Col) then
+      declare
+         Found        : array (1 .. X.N_Rows) of Boolean := (others => False);
+      begin
+         for Row in 1 .. X.N_Rows loop
+            Found_In_Row := False;
+
+            for Col in 1 .. X.N_Cols loop
+               if X (Row, Col) = One then
+                  if Found_In_Row or Found (Col) then
+                     return False;
+                  end if;
+
+                  Found_In_Row := True;
+                  Found (Col) := True;
+
+               elsif X (Row, Col) /= Zero then
                   return False;
                end if;
-
-               Found_In_Row := True;
-               Found (Col) := True;
-
-            elsif X (Row, Col) /= Zero then
-               return False;
-            end if;
+            end loop;
          end loop;
-      end loop;
 
-      return (for all I in Found'Range => Found (I));
+         return (for all I in Found'Range => Found (I));
+      end;
    end Is_Permutation;
 
    -------------------------
@@ -63,8 +71,8 @@ package body Generic_LUP is
 
    function Is_Lower_Triangular (X : Matrix) return Boolean is
    begin
-      return (for all Row in X'Range (1)  =>
-                (for all Col in Index_Type'Succ (Row) .. X'Last (2) => X (Row, Col) = Zero));
+      return (for all Row in 1 .. X.N_Rows  =>
+                (for all Col in Row + 1 .. X.N_Cols => X (Row, Col) = Zero));
    end Is_Lower_Triangular;
 
    -------------------------
@@ -73,8 +81,9 @@ package body Generic_LUP is
 
    function Is_Upper_Triangular (X : Matrix) return Boolean is
    begin
-      return (for all Col in X'Range (2)  =>
-                (for all Row in Index_Type'Succ (Col) .. X'Last (1) => X (Row, Col) = Zero));
+      return (for all Col in 1 .. X.N_Cols  =>
+                (for all Row in Col + 1 .. X.N_Rows =>
+                   X (Row, Col) = Zero));
    end Is_Upper_Triangular;
 
    -----------------------
@@ -87,7 +96,7 @@ package body Generic_LUP is
          raise Constraint_Error;
       end if;
 
-      return (for all Row in X'Range (1) => X (Row, Row) = One);
+      return (for all Row in 1 .. X.N_Rows => X (Row, Row) = One);
    end Has_Unit_Diagonal;
 
 
@@ -111,16 +120,6 @@ package body Generic_LUP is
 
 
 
-      function "*" (X : Field_Type; V : Vector) return Vector
-      is
-      begin
-         return Result : Vector (V'Range) do
-            for I in Result'Range loop
-               Result (I) := X * V (I);
-            end loop;
-         end return;
-      end "*";
-
       procedure To_Upper_Triangular (U               : in out Matrix;
                                      Applied_Actions : in out Action_Lists.List)
         with
@@ -143,7 +142,7 @@ package body Generic_LUP is
                return;
             end if;
 
-            for Row in Col .. Object'Last (1) loop
+            for Row in Col .. Object.N_Rows loop
                if Object (Row, Col) /= Zero then
                   declare
                      Action : constant Acts.Action_Type :=
@@ -159,25 +158,34 @@ package body Generic_LUP is
             end loop;
          end Bring_Non_Zero_On_Diagonal;
 
+         function Lower_Half_Column (Object : Matrix;
+                                     Col    : Index_Type)
+                                     return Matrix
+           with
+             Pre => Col < Object.N_Cols,
+             Post =>
+               Lower_Half_Column'Result.Is_Vector and
+               Lower_Half_Column'Result.Length = Object.N_Rows - Col;
+
          -----------------------
          -- Lower_Half_Column --
          -----------------------
 
          function Lower_Half_Column (Object : Matrix;
                                      Col    : Index_Type)
-                                     return Vector
+                                     return Matrix
          is
 
          begin
-            return Result : Vector (Index_Type'Succ (Col) .. Object'Last (1)) do
-               for Row in Result'Range loop
-                  Result (Row) := Object (Row, Col);
+            return Result : Matrices.Matrix := Matrices.Zero (Object.N_Rows - Col, 1) do
+               for Row in 1 .. Result.N_Rows loop
+                  Result (Row) := Object (Row + Col, Col);
                end loop;
             end return;
          end Lower_Half_Column;
 
       begin
-         for Col in U'First (2) .. Index_Type'Pred (U'Last (2)) loop
+         for Col in 1 .. U.N_Cols - 1 loop
             Bring_Non_Zero_On_Diagonal (U, Col, Applied_Actions);
 
             if U (Col, Col) = Zero then
@@ -189,7 +197,7 @@ package body Generic_LUP is
             declare
                Q : constant Field_Type := -Inv (U (Col, Col));
 
-               Coeff : constant Vector := Q * Lower_Half_Column (U, Col);
+               Coeff : constant Matrix := Q * Lower_Half_Column (U, Col);
 
                Action : constant Acts.Action_Type :=
                           Acts.Add_Rows (Src   => Col,
@@ -207,11 +215,11 @@ package body Generic_LUP is
         (L               : out Matrix;
          P               : out Matrix;
          Applied_Actions : in out Action_Lists.List;
-         Rng             : Index_Range)
+         U               : Matrix)
         with
           Post =>
-            Row_Range (L) = Rng and
-            Row_Range (P) = Rng and
+            Have_Equal_Size (L, U)  and
+            Have_Equal_Size (P, U)  and
             Is_Lower_Triangular (L) and
             Has_Unit_Diagonal (L) and
             Is_Permutation (P) and
@@ -221,12 +229,12 @@ package body Generic_LUP is
         (L               : out Matrix;
          P               : out Matrix;
          Applied_Actions : in out Action_Lists.List;
-         Rng             : Index_Range)
+         U               : Matrix)
       is
          use Acts;
       begin
-         L := Identity (Rng);
-         P := Identity (Rng);
+         L := Identity (U);
+         P := Identity (U);
 
          while not Applied_Actions.Is_Empty loop
             pragma Loop_Variant (Decreases => Applied_Actions.Length);
@@ -268,12 +276,11 @@ package body Generic_LUP is
 
       Rng : constant Index_Range := Row_Range (X);
    begin
-      if X'Length (1) = 0 then
-         -- This makes no sense
+      if not Is_Square (X) then
          raise Constraint_Error;
       end if;
 
-      if X'Length (1) = 1 then
+      if X.N_Rows = 1 then
          -- Handle separately this simple and degenerate case
          U := X;
          L := Identity (X);
@@ -286,7 +293,7 @@ package body Generic_LUP is
 
       To_Upper_Triangular (U, Applied_Actions);
 
-      De_Intertwine_Actions (L, P, Applied_Actions, Row_Range (X));
+      De_Intertwine_Actions (L, P, Applied_Actions, X);
    end LUP;
 
    -----------------
@@ -294,9 +301,9 @@ package body Generic_LUP is
    -----------------
 
    function Determinant (X : Matrix) return Field_Type is
-      U : Matrix (X'Range (1), X'Range (2));
-      L : Matrix (X'Range (1), X'Range (2));
-      P : Matrix (X'Range (1), X'Range (2));
+      U : Matrix;
+      L : Matrix;
+      P : Matrix;
 
       Result : Field_Type;
    begin
@@ -307,102 +314,131 @@ package body Generic_LUP is
 
       Result := One;
 
-      for Row in U'Range (1) loop
+      for Row in 1 .. U.N_Rows loop
          Result := Result * U (Row, Row);
       end loop;
 
       return Result;
    end Determinant;
-
-   ------------
-   -- Column --
-   ------------
-
-   function Column (A : Matrix; Col : Index_Type) return Vector
-   is
-   begin
-
-      return Result : Vector (A'Range (2)) do
-         for Row in Result'Range loop
-            Result (Row) := A (Row, Col);
-         end loop;
-      end return;
-
-   end Column;
-
-   ---------
-   -- "*" --
-   ---------
-
-   function "*" (C : Field_Type; V : Vector) return Vector
-   is
-   begin
-
-      return Result : Vector (V'Range) do
-         for Row in Result'Range loop
-            Result (Row) := C * V (Row);
-         end loop;
-      end return;
-   end "*";
-
-   ---------
-   -- "-" --
-   ---------
-   function "-" (X, Y : Vector) return Vector
-     with
-       Pre => Have_Equal_Size (X, Y);
-
-   function "-" (X, Y : Vector) return Vector
-   is
-   begin
-      if not Have_Equal_Size (X, Y) then
-         raise Constraint_Error;
-      end if;
-
-      return Result : Vector (X'Range) do
-         for Row in Result'Range loop
-            Result (Row) := X (Row)-Y (Row);
-         end loop;
-      end return;
-
-   end "-";
-
+   --
+   --  ------------
+   --  -- Column --
+   --  ------------
+   --
+   --  function Column (A : Matrix; Col : Index_Type) return Vector
+   --  is
+   --  begin
+   --
+   --     return Result : Matrix := Matrices.zero do
+   --        for Row in Result'Range loop
+   --           Result (Row) := A (Row, Col);
+   --        end loop;
+   --     end return;
+   --
+   --  end Column;
+   --
+   --  ---------
+   --  -- "*" --
+   --  ---------
+   --
+   --  function "*" (C : Field_Type; V : Vector) return Vector
+   --  is
+   --  begin
+   --
+   --     return Result : Vector (V'Range) do
+   --        for Row in Result'Range loop
+   --           Result (Row) := C * V (Row);
+   --        end loop;
+   --     end return;
+   --  end "*";
+   --
+   --  ---------
+   --  -- "-" --
+   --  ---------
+   --  function "-" (X, Y : Vector) return Vector
+   --    with
+   --      Pre => Have_Equal_Size (X, Y);
+   --
+   --  function "-" (X, Y : Vector) return Vector
+   --  is
+   --  begin
+   --     if not Have_Equal_Size (X, Y) then
+   --        raise Constraint_Error;
+   --     end if;
+   --
+   --     return Result : Vector (X'Range) do
+   --        for Row in Result'Range loop
+   --           Result (Row) := X (Row)-Y (Row);
+   --        end loop;
+   --     end return;
+   --
+   --  end "-";
+   --
    ---------------------------
    -- Solve_Upper_Triangual --
    ---------------------------
 
-   function Solve_Upper_Triangual (U : Matrix; B : Vector) return Vector
+   function Solve_Upper_Triangular (U : Matrix; B : Matrix) return Matrix
    is
-      X         : Vector (B'Range);
-      Working_B : Vector := B;
    begin
       pragma Assert (Is_Upper_Triangular (U));
 
-      for I in reverse X'Range loop
-         if U (I, I) = Zero then
-            raise Singular_Matrix;
-         end if;
+      return X : Matrix := Matrices.Zero (B) do
 
-         X (I) := Working_B (I) / U (I, I);
+         declare
+            Working_B : Matrix := B;
+         begin
+            for I in reverse 1 .. X.Length loop
+               if U (I, I) = Zero then
+                  raise Singular_Matrix;
+               end if;
 
-         Working_B := Working_B - X (I) * Column (U, I);
-      end loop;
+               X (I) := Working_B (I) / U (I, I);
 
-      return X;
-   end Solve_Upper_Triangual;
+               Working_B := Working_B - X (I) * U.Column (I);
+            end loop;
+         end;
+      end return;
+   end Solve_Upper_Triangular;
+
+   ----------------------------
+   -- Solve_Lower_Triangular --
+   ----------------------------
+
+   function Solve_Lower_Triangular (L : Matrix; B : Matrix) return Matrix
+   is
+      J : constant Matrix := Reverse_Identity (L);
+   begin
+      --
+      --  We want to solve the linear system
+      --
+      --        L * x = B
+      --
+      --  where L is lower triangular.  Write L = J*U*J where U is upper
+      --  triangular.  The system above is equivalent to
+      --
+      --        J * U * J * x = B <=> U * y = J*B
+      --
+      --  where y = J*x.  I can find y by solving an upper triangular system
+      --  with U=J*L*J and J*B
+      --
+      --
+      declare
+         U : constant Matrix := J * L * J;
+         Y : constant Matrix := Solve_Upper_Triangular (U, J * B);
+      begin
+         return J * Y;
+      end;
+   end Solve_Lower_Triangular;
 
    -------------------------
    -- Solve_Linear_System --
    -------------------------
 
-   -------------------------
-   -- Solve_Linear_System --
-   -------------------------
-
-   function Solve_Linear_System (A : Matrix; B : Vector) return Vector is
-      U : Matrix (A'Range (1), A'Range (2));
-      L : Matrix (A'Range (1), A'Range (2));
-      P : Matrix (A'Range (1), A'Range (2));
+   function Solve_Linear_System (A : Matrix; B : Matrix) return Matrix is
+      U : Matrix;
+      L : Matrix;
+      P : Matrix;
    begin
       --
       --  We want to solve A*x = b.  We decompose A as P*A = L*U and the
@@ -410,30 +446,12 @@ package body Generic_LUP is
       --
       --       P*b = c = P*A*x = L*U*x
       --
-      --  Write L = J*V*J, with V upper triangualr, and rewrite the system as
-      --
-      --       J*P*b = V*J*U*x = V*y
-      --       y = J*U*x  <==> J*y = U*x
-      --
-      --  Therefore, the solution can be written as
-      --
-      --      y = Inv(V)*(J*P*b),
-      --      x = Inv(U)*(J*y)
-      --
-      -- where Inv(V)*(J*P*b) and Inv(U)*(J*y) can be computed using
-      -- Solve_Upper_Trianuglar
-      --
       LUP (X => A,
            L => L,
            U => U,
            P => P);
 
-      declare
-         J : constant Matrix := Reverse_Identity (U);
-         Y : constant Vector := Solve_Upper_Triangual (J * L * J, J * P * B);
-      begin
-         return Solve_Upper_Triangual (U, J * Y);
-      end;
+      return Solve_Upper_Triangular (U, Solve_Lower_Triangular (L, P * B));
    end Solve_Linear_System;
 
 

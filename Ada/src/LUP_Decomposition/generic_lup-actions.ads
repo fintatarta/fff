@@ -17,13 +17,13 @@ package Generic_Lup.Actions is
          Is_Permutation (Swap_Rows'Result);
 
    function Add_Rows (Src   : Index_Type;
-                      Coeff : Vector;
+                      Coeff : Matrix;
                       Rng   : Index_Range) return Action_Type
      with
        Pre =>
+         Coeff.Is_Vector and then
          Is_In (Src, Rng) and then
-         Coeff'First = Index_Type'Succ (Src) and then
-         Coeff'Last = Last (Rng),
+         Coeff.Length = Last (Rng)-Src,
          Post =>
            not Is_Permutation (Add_Rows'Result);
 
@@ -53,11 +53,9 @@ private
 
    type Action_Class is (Permutation, Sum);
 
-   type Action_Type (Class : Action_Class;
-                     First : Index_Type;
-                     Last  : Index_Type) is
+   type Action_Type (Class : Action_Class) is
       record
-         Mtx : Matrix (First .. Last, First .. Last);
+         Mtx : Matrix;
 
          case Class is
             when Permutation =>

@@ -31,12 +31,10 @@ package Generic_LUP is
 
 
    function Is_Square (A : Matrices.Matrix) return Boolean
-   is (A.N_Rows = A.N_Cols)
-     with Ghost;
+   is (A.N_Rows = A.N_Cols);
 
    function Have_Equal_Size (A, B : Matrix) return Boolean
-   is (A.N_Rows = B.N_Rows and A.N_Cols = B.N_Cols)
-     with Ghost;
+   is (A.N_Rows = B.N_Rows and A.N_Cols = B.N_Cols);
 
    function Is_Permutation (X : Matrix) return Boolean
      with
@@ -82,7 +80,7 @@ package Generic_LUP is
      with
        Pre => Is_Square (X);
 
-   function Solve_Upper_Triangual (U : Matrix; B : Matrix) return Matrix
+   function Solve_Upper_Triangular (U : Matrix; B : Matrix) return Matrix
      with
        Pre =>
          B.Is_Column_Vector and
@@ -91,8 +89,20 @@ package Generic_LUP is
          Is_Upper_Triangular (U) and
          (for all I in 1 .. U.N_Rows  => U (I, I) /= Zero),
          Post =>
-           Have_Equal_Size (B, Solve_Upper_Triangual'Result) and
-           U * Solve_Upper_Triangual'Result = B;
+           Have_Equal_Size (B, Solve_Upper_Triangular'Result) and
+           U * Solve_Upper_Triangular'Result = B;
+
+   function Solve_Lower_Triangular (U : Matrix; B : Matrix) return Matrix
+     with
+       Pre =>
+         B.Is_Column_Vector and
+         U.N_Cols = B.N_Rows and
+         Is_Square (U) and
+         Is_Lower_Triangular (U) and
+         (for all I in 1 .. U.N_Rows  => U (I, I) /= Zero),
+         Post =>
+           Have_Equal_Size (B, Solve_Lower_Triangular'Result) and
+           U * Solve_Lower_Triangular'Result = B;
 
 
    function Solve_Linear_System (A : Matrix; B : Matrix) return Matrix

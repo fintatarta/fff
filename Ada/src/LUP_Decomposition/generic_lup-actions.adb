@@ -15,7 +15,7 @@ package body Generic_Lup.Actions is
    ---------------------
 
    function Have_Equal_Size (X, Y : Action_Type) return Boolean
-   is (X.First = Y.First and X.Last = Y.Last);
+   is (Have_Equal_Size (X.Mtx, Y.Mtx));
 
 
    ---------------
@@ -26,9 +26,7 @@ package body Generic_Lup.Actions is
    is
    begin
       return Swap : Action_Type := Action_Type'(Class => Permutation,
-                                                First => Rng.First,
-                                                Last  => Rng.Last,
-                                                Mtx   => Identity (Rng))
+                                                Mtx   => Identity (Last (Rng)))
       do
          Swap.Mtx (R, S) := One;
          Swap.Mtx (S, R) := One;
@@ -42,18 +40,18 @@ package body Generic_Lup.Actions is
    --------------
 
    function Add_Rows
-     (Src : Index_Type; Coeff : Vector; Rng : Index_Range) return Action_Type
+     (Src   : Index_Type;
+      Coeff : Matrix;
+      Rng   : Index_Range) return Action_Type
    is
 
    begin
       return S : Action_Type := Action_Type'(Class => Sum,
-                                             First => Rng.First,
-                                             Last  => Rng.Last,
-                                             Mtx   => Identity (Rng),
+                                             Mtx   => Identity (Last (Rng)),
                                              Src   => Src)
       do
-         for Row in Index_Type'Succ (Src) .. s.Mtx'Last (1) loop
-            S.Mtx (Row, Src) := Coeff (Row);
+         for Row in Src + 1 .. S.Mtx.N_Rows loop
+            S.Mtx (Row, Src) := Coeff (Row - Src);
          end loop;
       end return;
    end Add_Rows;
@@ -72,7 +70,7 @@ package body Generic_Lup.Actions is
                Result.Mtx := Transpose (Result.Mtx);
 
             when Sum =>
-               for Row in Index_Type'Succ (Result.Src) .. Result.Mtx'Last (1) loop
+               for Row in Result.Src + 1 .. Result.Mtx.N_Rows loop
                   Result.Mtx (Row, Result.Src) := - Result.Mtx (Row, Result.Src);
                end loop;
          end case;
