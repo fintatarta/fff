@@ -78,6 +78,42 @@ package body Generic_Matrices is
         (Element => Reference (X.Data, To_Index (X, Row, Col)).Element);
    end Reference;
 
+   ---------------
+   -- To_Matrix --
+   ---------------
+
+   function To_Matrix (X : Ring_Array) return Matrix
+   is
+   begin
+      return Result : Matrix := Zero (X'Length (1), X'Length (2)) do
+
+         for  Row in 1 .. Result.N_Rows loop
+            for  Col in 1 .. Result.N_Cols loop
+               Result (Row, Col) := X (Row + X'First (1)-1, Col + X'First (2)-1);
+            end loop;
+         end loop;
+
+      end return;
+   end To_Matrix;
+
+   --------------
+   -- To_Array --
+   --------------
+
+   function To_Array (X : Matrix) return Ring_Array
+   is
+   begin
+      return Result : Ring_Array (1 .. X.N_Rows, 1 .. X.N_Cols) do
+
+         for Row in Result'Range (1) loop
+            for col in Result'Range (2) loop
+               Result (Row, Col) := X (Row, Col);
+            end loop;
+         end loop;
+
+      end return;
+   end To_Array;
+
    ----------
    -- Zero --
    ----------

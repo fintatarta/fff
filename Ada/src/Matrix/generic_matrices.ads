@@ -78,6 +78,21 @@ package Generic_Matrices is
      with
        Pre => Row <= X.N_Rows and Col <= X.N_Cols;
 
+   type Ring_Array is array (Positive range <>, Positive range <>) of Ring_Type;
+
+   function To_Matrix (X : Ring_Array) return Matrix
+     with
+       Post =>
+         To_Matrix'Result.N_Rows = X'Length (1) and
+         To_Matrix'Result.N_cols = X'Length (2);
+
+   function To_Array (X : Matrix) return Ring_Array
+   with
+       Post =>
+         X.N_Rows = To_Array'Result'Length (1) and
+         X.N_cols = To_Array'Result'Length (2);
+
+
    function Zero (N : Index_Type) return Matrix
      with
        Post =>
