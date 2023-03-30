@@ -12,7 +12,7 @@ generic
    with function Inv (X : Field_Type) return Field_Type is <>;
 package Generic_Polynomials is
    type Polynomial is tagged private
-     with Constant_Indexing => Coefficient;
+     with Constant_Indexing => Value;
 
    Zero : constant Polynomial;
    One  : constant Polynomial;
@@ -23,11 +23,31 @@ package Generic_Polynomials is
 
    function To_Polynomial (C : Coefficient_Array) return Polynomial;
 
-   function Coefficient (P : Polynomial; N : Natural) return Field_Type;
+   function Value (P : Polynomial; N : Natural) return Field_Type;
+   function Value (P : Polynomial; X : Field_Type) return Field_Type;
+
+   function Leading (X : Polynomial) return Field_Type;
+
+   function Monomial (C        : Field_Type;
+                      Exponent : Natural := 1)
+                      return Polynomial
+     with
+       Post =>
+         Exponent = Monomial'Result.Degree and
+         Leading (Monomial'Result) = C;
+
+
+   function Shift (P : Polynomial; Amount : Natural := 1) return Polynomial
+     with
+       Post => Shift'Result.Degree = P.Degree + Amount;
+
+   procedure Shift (P : in out Polynomial; Amount : Natural := 1);
 
    function "+" (X, Y : Polynomial) return Polynomial;
    function "-" (X : Polynomial) return Polynomial;
    function "-" (X, Y : Polynomial) return Polynomial;
+
+   function "*" (C : Field_Type; P : Polynomial) return Polynomial;
 
    function "*" (X, Y : Polynomial) return Polynomial;
    function Is_Unit (X : Polynomial) return Boolean;
@@ -46,20 +66,23 @@ package Generic_Polynomials is
        Pre => Y /= Zero;
 
 
-   procedure Div_Mod (X, Y      : Polynomial;
-                      Quotient  : out Polynomial;
-                      Remainder : out Polynomial)
+   procedure Div_Mod (Num, Den : Polynomial; Quotient : out Polynomial; Remainder : out Polynomial)
      with
-       Pre => Y /= Zero,
+       Pre => Den /= Zero,
        Post =>
-         (Remainder = Zero or else Degree (Remainder) < Degree (Y)) and
-         X = Quotient * Y + Remainder;
+         (Remainder = Zero or else Degree (Remainder) < Degree (Den)) and
+         Num = Quotient * Den + Remainder;
 
    function Degree (X : Polynomial) return Natural
      with
        Pre => X /= Zero;
 
-
+   function Image
+     (X                 : Polynomial;
+      Field_Image       : access function (X : Field_Type) return String;
+      Var_Name          : Character := 'x';
+      Exponent_Operator : Character := '^')
+      return String;
 private
    procedure Normalize (X : in out Polynomial);
 
