@@ -38,6 +38,12 @@ package Generic_Matrices is
    function Is_Vector (X : Matrix) return Boolean
    is (X.N_Rows = 1 or X.N_Cols = 1);
 
+   function Is_Column_Vector (X : Matrix) return Boolean
+   is (X.N_Cols = 1);
+
+   function Is_Row_Vector (X : Matrix) return Boolean
+   is (X.N_Rows = 1);
+
    function Length (X : Matrix) return Positive
    is (Positive'Max (X.N_Rows, X.N_Cols));
 
@@ -100,6 +106,47 @@ package Generic_Matrices is
        Post =>
          Identity'Result.N_Rows = N_Rows and
          Identity'Result.N_Cols = N_Cols;
+
+   function Reverse_Identity (N : Index_Type) return Matrix
+     with
+       Post =>
+         Reverse_Identity'Result.N_Rows = N and
+         Reverse_Identity'Result.N_Cols = N;
+
+   function Reverse_Identity (X : Matrix) return Matrix
+     with
+       Post =>
+         Reverse_Identity'Result.N_Rows = X.N_Rows and
+         Reverse_Identity'Result.N_Cols = X.N_Cols;
+
+
+   function Reverse_Identity (N_Rows, N_Cols : Index_Type) return Matrix
+     with
+       Post =>
+         Reverse_Identity'Result.N_Rows = N_Rows and
+         Reverse_Identity'Result.N_Cols = N_Cols;
+
+   function Flip_Lr(X: Matrix) return Matrix
+     with
+       Post =>
+         Flip_Lr'Result.N_Rows = X.N_Rows and
+         Flip_Lr'Result.N_Cols = X.N_Cols;
+
+   function Flip_Ud (X : Matrix) return Matrix
+     with
+       Post =>
+         Flip_Ud'Result.N_Rows = X.N_Rows and
+         Flip_Ud'Result.N_Cols = X.N_Cols;
+
+   function Transpose (X : Matrix) return Matrix
+     with
+       Post =>
+         Transpose'Result.N_Rows = X.N_Cols and
+         Transpose'Result.N_Cols = X.N_Rows;
+
+   function Trace (X : Matrix) return Ring_Type;
+
+
 
    function "+" (X, Y : Matrix) return Matrix
      with

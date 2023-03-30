@@ -136,6 +136,98 @@ package body Generic_Matrices is
       end return;
    end Identity;
 
+   ----------------------
+   -- Reverse_Identity --
+   ----------------------
+
+   function Reverse_Identity (N : Index_Type) return Matrix
+   is (Reverse_Identity (N, N));
+
+   ----------------------
+   -- Reverse_Identity --
+   ----------------------
+
+   function Reverse_Identity (X : Matrix) return Matrix
+   is (Reverse_Identity (N_Rows => X.N_Rows,
+                         N_Cols => X.N_Cols));
+
+
+   ----------------------
+   -- Reverse_Identity --
+   ----------------------
+
+   function Reverse_Identity (N_Rows, N_Cols : Index_Type) return Matrix
+   is (Flip_Lr (Identity (N_Rows => N_Rows, N_Cols => N_Cols)));
+
+   -------------
+   -- Flip_Lr --
+   -------------
+
+   function Flip_Lr (X : Matrix) return Matrix
+   is
+   begin
+      return Result : Matrix := Zero (X) do
+         for Row in 1 .. Result.N_Rows loop
+            for Col in 1 .. Result.N_Cols loop
+               Result (Row, Col) := X (Row, X.N_Cols + 1 - Col);
+            end loop;
+         end loop;
+      end return;
+   end Flip_Lr;
+
+   -------------
+   -- Flip_Ud --
+   -------------
+
+   function Flip_Ud (X : Matrix) return Matrix
+   is
+   begin
+      return Result : Matrix := Zero (X) do
+
+         for Row in 1 .. Result.N_Rows loop
+            for Col in 1 .. Result.N_Cols loop
+               Result (Row, Col) := X (X.N_Rows + 1 - Row, Col);
+            end loop;
+         end loop;
+
+      end return;
+   end Flip_Ud;
+
+   ---------------
+   -- Transpose --
+   ---------------
+
+   function Transpose (X : Matrix) return Matrix
+   is
+   begin
+      return Result : Matrix := Zero (N_Rows => X.N_Cols,
+                                      N_Cols => X.N_Rows) do
+
+         for Row in 1 .. Result.N_Rows loop
+            for Col in 1 .. Result.N_Cols loop
+               Result (Row, Col) := X (Col, Row);
+            end loop;
+         end loop;
+
+      end return;
+   end Transpose;
+
+   -----------
+   -- Trace --
+   -----------
+
+   function Trace (X : Matrix) return Ring_Type
+   is
+   begin
+      return Accumulator : Ring_Type := Ring_Zero do
+
+         for I in 1 .. Index_Type'Min (X.N_Rows, X.N_Cols) loop
+            Accumulator := Accumulator + X (I, I);
+         end loop;
+
+      end return;
+   end Trace;
+
    ---------
    -- "+" --
    ---------

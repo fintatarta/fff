@@ -9,8 +9,8 @@ package body Generic_LUP is
    ---------------
 
    function Row_Range (X : Matrix) return Index_Range
-   is (Index_Range'(First => X'First (1),
-                    Last  => X'Last (1)));
+   is (Index_Range'(First => 1,
+                    Last  => X.N_Rows));
 
 
    function First (X : Index_Range) return Index_Type
@@ -27,18 +27,6 @@ package body Generic_LUP is
    is (X in R.First .. R.Last);
 
 
-   function Transpose (X : Matrix) return Matrix
-   is
-      Result : Matrix (X'Range (2), X'Range (1));
-   begin
-      for Row in X'Range (1) loop
-         for Col in X'Range (2) loop
-            Result (Col, Row) := X (Row, Col);
-         end loop;
-      end loop;
-
-      return Result;
-   end Transpose;
 
    --------------------
    -- Is_Permutation --
@@ -102,96 +90,10 @@ package body Generic_LUP is
       return (for all Row in X'Range (1) => X (Row, Row) = One);
    end Has_Unit_Diagonal;
 
-   ---------
-   -- "*" --
-   ---------
-
-   function "*" (X, Y : Matrix) return Matrix is
-
-      Accumulator : Field_Type;
-   begin
-      return Result : Matrix (X'Range (1), Y'Range (2)) do
-         for Row in Result'Range (1) loop
-            for Col in Result'Range (2) loop
-               Accumulator := Zero;
-
-               for Internal in X'Range (2) loop
-                  Accumulator := Accumulator + X (Row, Internal) * Y (Internal, Col);
-               end loop;
-
-               Result (Row, Col) := Accumulator;
-            end loop;
-         end loop;
-      end return;
-   end "*";
-
-   ---------
-   -- "*" --
-   ---------
-
-   function "*" (X : Matrix; Y : Vector) return Vector is
-      Accumulator : Field_Type;
-   begin
-      return Result : Vector (X'Range (1)) do
-         for Row in Result'Range loop
-            Accumulator := Zero;
-
-            for Internal in X'Range (2) loop
-               Accumulator := Accumulator + X (Row, Internal) * Y (Internal);
-            end loop;
-
-            Result (Row) := Accumulator;
-         end loop;
-      end return;
-   end "*";
-
-   --------------
-   -- Identity --
-   --------------
-
-   function Identity (Rng : Index_Range) return Matrix
-   is
-   begin
-      return I : Matrix (Rng.First .. Rng.Last, Rng.First .. Rng.Last) :=
-        (others => (others => Zero)) do
-
-         for Row in I'Range (1) loop
-            I (Row, Row) := One;
-         end loop;
-      end return;
-   end Identity;
-
-
-   --------------
-   -- Identity --
-   --------------
-
-   function Identity (Template : Matrix) return Matrix
-   is (Identity (Row_Range (Template)));
 
    ----------------------
    -- Reverse_Identity --
    ----------------------
-
-   function Reverse_Identity (Template : Matrix) return Matrix
-   is
-      Rng : constant Index_Range := Row_Range (Template);
-      Cursor : Index_Type;
-   begin
-      return I : Matrix (Rng.First .. Rng.Last, Rng.First .. Rng.Last) :=
-        (others => (others => Zero)) do
-
-         Cursor := Rng.Last;
-
-         for Row in I'Range (1) loop
-            I (Row, Cursor) := One;
-
-            if Cursor /= Index_Type'First then
-               Cursor := Index_Type'Pred (Cursor);
-            end if;
-         end loop;
-      end return;
-   end Reverse_Identity;
 
 
    ---------
