@@ -10,6 +10,9 @@ generic
    with function "-" (X : Field_Type) return Field_Type is <>;
    with function "*" (X, Y : Field_Type) return Field_Type is <>;
    with function Inv (X : Field_Type) return Field_Type is <>;
+
+   with function "=" (X, Y : Field_Type) return Boolean is <>;
+
 package Generic_Polynomials is
    type Polynomial is tagged private
      with Constant_Indexing => Value;
@@ -26,7 +29,11 @@ package Generic_Polynomials is
    function Value (P : Polynomial; N : Natural) return Field_Type;
    function Value (P : Polynomial; X : Field_Type) return Field_Type;
 
-   function Leading (X : Polynomial) return Field_Type;
+   function Leading_Power (X : Polynomial) return Natural;
+
+   function Leading (X : Polynomial) return Field_Type
+     with
+       Post => X (X.Leading_Power) = Leading'Result;
 
    function Monomial (C        : Field_Type;
                       Exponent : Natural := 1)
@@ -43,9 +50,17 @@ package Generic_Polynomials is
 
    procedure Shift (P : in out Polynomial; Amount : Natural := 1);
 
-   function "+" (X, Y : Polynomial) return Polynomial;
-   function "-" (X : Polynomial) return Polynomial;
-   function "-" (X, Y : Polynomial) return Polynomial;
+   function "+" (X, Y : Polynomial) return Polynomial
+     with
+       Post => "+"'Result.Leading_Power <= Integer'Max (X.Leading_Power, Y.Leading_Power);
+
+   function "-" (X : Polynomial) return Polynomial
+     with
+       Post => "-"'Result.Leading_Power = X.Leading_Power;
+
+   function "-" (X, Y : Polynomial) return Polynomial
+     with
+       Post => "-"'Result.Leading_Power <= Integer'Max (X.Leading_Power, Y.Leading_Power);
 
    function "*" (C : Field_Type; P : Polynomial) return Polynomial;
 
@@ -56,6 +71,8 @@ package Generic_Polynomials is
        Pre => Is_Unit (X),
        Post => X * Inv'Result = One;
 
+   function Is_A_Constant (X : Polynomial) return Boolean;
+
    function "mod" (X, Y : Polynomial) return Polynomial
      with
        Pre => Y /= Zero,
@@ -65,12 +82,13 @@ package Generic_Polynomials is
      with
        Pre => Y /= Zero;
 
+   function "=" (X, Y : Polynomial) return Boolean;
 
    procedure Div_Mod (Num, Den : Polynomial; Quotient : out Polynomial; Remainder : out Polynomial)
      with
        Pre => Den /= Zero,
        Post =>
-         (Remainder = Zero or else Degree (Remainder) < Degree (Den)) and
+         (Remainder = Zero or else Leading_Power (Remainder) < Degree (Den)) and
          Num = Quotient * Den + Remainder;
 
    function Degree (X : Polynomial) return Natural
@@ -84,6 +102,7 @@ package Generic_Polynomials is
       Exponent_Operator : Character := '^')
       return String;
 private
+
    procedure Normalize (X : in out Polynomial);
 
    use type Ada.Containers.Count_Type;
@@ -94,12 +113,16 @@ private
 
    type Polynomial is tagged
       record
-         Coeffs : Field_Vectors.Vector;
+         Coeffs : Field_Vectors.Vector := Field_Vectors.To_Vector (New_Item => Field_Zero,
+                                                                   Length   => 1);
       end record
      with
        Type_Invariant =>
          not Coeffs.Is_Empty and
          (Coeffs.Length = 1 or else Coeffs.Last_Element /= Field_Zero);
+
+   function Leading_Power (X : Polynomial) return Natural
+   is (X.Coeffs.Last_Index);
 
    function To_Polynomial (C : Field_Type) return Polynomial
    is ((Coeffs => Field_Vectors.To_Vector (C, 1)));

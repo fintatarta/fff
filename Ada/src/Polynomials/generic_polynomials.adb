@@ -1,5 +1,6 @@
 pragma Ada_2012;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Text_IO; use Ada.Text_IO;
 package body Generic_Polynomials is
 
    -------------------
@@ -66,15 +67,26 @@ package body Generic_Polynomials is
 
       else
          declare
+            use Field_Vectors;
+            use Ada.Containers;
+
             Degree_Result : constant Natural :=
                               Natural'Max (Degree (X), Degree (Y));
 
-            Result        : Polynomial;
+            Result        : Polynomial :=
+                              (Coeffs => To_Vector (New_Item => Field_Zero,
+                                                    Length   => Count_Type (Degree_Result + 1)));
          begin
+            --  Put_Line ("$$" & Degree_Result'Image);
+
             for I in 0 .. Degree_Result loop
-               Result.Coeffs.Append (X (I) + Y (I));
+               Result.Coeffs (I) := X (I) + Y (I);
+
+               --  Put_Line ("$$$" & Result.Leading_Power'image);
             end loop;
 
+            Normalize (Result);
+            --  Put_Line ("$$$o" & Result.Leading_Power'Image);
             return Result;
          end;
       end if;
@@ -86,9 +98,9 @@ package body Generic_Polynomials is
 
    function "-" (X : Polynomial) return Polynomial is
    begin
-      return Result : Polynomial do
-         for Element of X.Coeffs loop
-            Result.Coeffs.Append (-Element);
+      return Result : Polynomial := X do
+         for I in 0 .. Result.Leading_Power loop
+            Result.Coeffs (I) := -X (I);
          end loop;
       end return;
    end "-";
@@ -107,6 +119,8 @@ package body Generic_Polynomials is
          for Pos in Result.Coeffs.Iterate loop
             Result.Coeffs (Pos) := C * Result.Coeffs (Pos);
          end loop;
+
+         Normalize (Result);
       end return;
    end "*";
 
@@ -160,7 +174,7 @@ package body Generic_Polynomials is
    function "mod" (X, Y : Polynomial) return Polynomial is
       Q, R : Polynomial;
    begin
-      Div_Mod (num       => X,
+      Div_Mod (Num       => X,
                Den       => Y,
                Quotient  => Q,
                Remainder => R);
@@ -175,7 +189,7 @@ package body Generic_Polynomials is
    function Div (X, Y : Polynomial) return Polynomial is
       Q, R : Polynomial;
    begin
-      Div_Mod (num       => X,
+      Div_Mod (Num       => X,
                Den       => Y,
                Quotient  => Q,
                Remainder => R);
@@ -193,11 +207,13 @@ package body Generic_Polynomials is
    begin
       return Result : Polynomial :=
         (Coeffs => To_Vector (New_Item => Field_Zero,
-                              Length   => Count_Type(Exponent + 1)))
+                              Length   => Count_Type (Exponent + 1)))
       do
          Result.Coeffs (Exponent) := C;
       end return;
    end Monomial;
+
+
    -------------
    -- Div_Mod --
    -------------
@@ -211,19 +227,35 @@ package body Generic_Polynomials is
    begin
       Quotient := Zero;
 
-      while Working_Num.Degree >= Quotient.Degree loop
-         pragma Loop_Variant (Decreases => Working_Num.Degree);
+      while Working_Num.Leading_Power >= Den.Degree loop
+         Put_Line (Working_Num.Leading_Power'Image);
+         pragma Loop_Variant (Decreases => Working_Num.Leading_Power);
 
          C := Monomial (Leading (Working_Num) * K, Working_Num.Degree - Den.Degree);
+         Put_Line (">>" & Working_Num.Leading_Power'Image);
+         Put_Line (">>>" & C.Degree'Image & Integer'Image (Degree (C * Den)));
+
+         pragma Assert (Degree(C * Den) = Working_Num.Leading_Power);
 
          Quotient := Quotient + C;
 
          Working_Num := Working_Num - C * Den;
+         Put_Line (">>>>" & Working_Num.Leading_Power'Image);
+
       end loop;
+
+      Put_Line ("%" & Working_Num.Leading_Power'Image & Den.Degree'Image);
 
       Remainder := Working_Num;
    end Div_Mod;
 
+
+   function "=" (X, Y : Polynomial) return Boolean
+   is
+   begin
+      return X.Leading_Power = Y.Leading_Power
+        and then (for all I in 0 .. X.Leading_Power => X (I) = Y (I));
+   end "=";
    -----------
    -- Shift --
    -----------
@@ -283,7 +315,11 @@ package body Generic_Polynomials is
       end loop;
    end Normalize;
 
-    function Image
+
+   function Is_A_Constant (X : Polynomial) return Boolean
+   is (X.Coeffs.Length = 1);
+
+   function Image
      (X                 : Polynomial;
       Field_Image       : access function (X : Field_Type) return String;
       Var_Name          : Character := 'x';
@@ -292,19 +328,27 @@ package body Generic_Polynomials is
    is
       Accumulator : Unbounded_String := Null_Unbounded_String;
    begin
+      if X.Is_A_Constant then
+         return Field_Image (X (0));
+      end if;
+
       for N in 0 .. X.Degree loop
-         Accumulator := Accumulator & Field_Image (X (N));
+         if X (N) /= Field_Zero then
+            if Accumulator /= Null_Unbounded_String then
+               Accumulator := Accumulator & "+";
+            end if;
 
-         if N /= 0 then
-            Accumulator := Accumulator & ' ' & Var_Name;
-         end if;
+            if N = 0 or X (N) /= Field_One then
+               Accumulator := Accumulator & Field_Image (X (N));
+            end if;
 
-         if N > 1 then
-            Accumulator := Accumulator & Exponent_Operator & Integer'Image (N);
-         end if;
+            if N /= 0 then
+               Accumulator := Accumulator & ' ' & Var_Name;
+            end if;
 
-         if N < X.Degree then
-            Accumulator := Accumulator & "+";
+            if N > 1 then
+               Accumulator := Accumulator & Exponent_Operator & Integer'Image (N);
+            end if;
          end if;
       end loop;
 
