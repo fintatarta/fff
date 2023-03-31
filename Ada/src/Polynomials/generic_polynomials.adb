@@ -1,6 +1,6 @@
 pragma Ada_2012;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
-with Ada.Text_IO; use Ada.Text_IO;
+--  with Ada.Text_IO; use Ada.Text_IO;
 package body Generic_Polynomials is
 
    function Constant_Part (X : Polynomial) return Field_Type
@@ -268,7 +268,6 @@ package body Generic_Polynomials is
       Quotient := Zero;
 
       while Working_Num.Degree >= Den.Degree loop
-         Put_Line (Working_Num.Leading_Power'Image);
          pragma Loop_Variant (Decreases => Working_Num.Leading_Power);
 
          C := Monomial (Leading (Working_Num) * K,
@@ -279,7 +278,6 @@ package body Generic_Polynomials is
          Quotient := Quotient + C;
 
          Working_Num := Working_Num - C * Den;
-
       end loop;
 
       Remainder := Working_Num;

@@ -1,26 +1,42 @@
+with Ada.Numerics.Big_Numbers.Big_Integers;
 with Ada.Text_IO; use Ada.Text_IO;
 with Generic_Polynomials;
+with Ada.Numerics.Big_Numbers.Big_Reals;
 
 procedure Main is
-   function Inv (X : Float) return Float
-   is (1.0 / X);
+   use Ada.Numerics.Big_Numbers.Big_Reals;
+   use Ada.Numerics.Big_Numbers;
+   use type Ada.Numerics.Big_Numbers.Big_Integers.Big_Integer;
 
-   function Image (X : Float) return String
-   is (Float'Image (X));
+   One : constant Big_Real := To_Real (1);
+
+   Zero : constant Big_Real := To_Real (0);
+
+   function Inv (X : Big_Real) return Big_Real
+   is (One / X);
+
+   function To_Quotient (X : Big_Real) return String
+   is (if Numerator (X) = 0 then
+          "0"
+       elsif Denominator (X) = 1 then
+          Big_Integers.To_String (Numerator (X))
+       else
+          To_Quotient_String (X));
+
+   function Image (X : Big_Real) return String
+   is (To_Quotient (X));
 
    function Eq (X, Y : Float) return Boolean
    is
    begin
-      --  Put_Line (X'Image & "=" & Y'Image & "dif=" & Float'Image (abs (X - Y)));
-
       return abs (X - Y) <= Float'Max (abs X, abs Y) * 1.0e-6;
    end Eq;
+   pragma Unreferenced (Eq);
 
    package P_Float is
-     new Generic_Polynomials (Field_Type => Float,
-                              Field_Zero => 0.0,
-                              Field_One  => 1.0,
-                              "="        => Eq);
+     new Generic_Polynomials (Field_Type => Big_Real,
+                              Field_Zero => Zero,
+                              Field_One  => One);
 
    use P_Float;
 
@@ -58,4 +74,6 @@ begin
             Remainder => B);
 
    Put_Line ("Q=" & Image (A) & "; Rem=" & Image (B));
+
+   Put_Line (To_String (P (4.5)));
 end Main;

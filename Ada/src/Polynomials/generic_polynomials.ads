@@ -130,7 +130,9 @@ package Generic_Polynomials is
 
    function "=" (X, Y : Polynomial) return Boolean;
 
-   procedure Div_Mod (Num, Den : Polynomial; Quotient : out Polynomial; Remainder : out Polynomial)
+   procedure Div_Mod (Num, Den  : Polynomial;
+                      Quotient  : out Polynomial;
+                      Remainder : out Polynomial)
      with
        Pre => Den /= Zero,
        Post =>
