@@ -127,4 +127,77 @@ package body Generic_GCD is
       Gcd   := Top (Status);
    end GCD;
 
+   function Inv_Mod (X       : Euclidean_Ring;
+                     Modulus : Euclidean_Ring) return Euclidean_Ring
+   is
+      Is_Unit : Boolean;
+   begin
+      return Inverse : Euclidean_Ring do
+
+         Inv_Mod (X       => X,
+                  Modulus => Modulus,
+                  Inverse => Inverse,
+                  Is_Unit => Is_Unit);
+
+         if not Is_Unit then
+            raise Constraint_Error;
+         end if;
+
+      end return;
+   end Inv_Mod;
+
+   function Is_Unit_Mod (X       : Euclidean_Ring;
+                         Modulus : Euclidean_Ring)
+                         return Boolean
+   is
+      Ignored : Euclidean_Ring;
+      Is_Unit : Boolean;
+   begin
+      if X = Zero then
+         return False;
+      end if;
+
+      Inv_Mod (X       => X,
+               Modulus => Modulus,
+               Inverse => Ignored,
+               Is_Unit => Is_Unit);
+
+      return Is_Unit;
+   end Is_Unit_Mod;
+
+
+   procedure Inv_Mod (X       : Euclidean_Ring;
+                      Modulus : Euclidean_Ring;
+                      Inverse : out Euclidean_Ring;
+                      Is_Unit : out Boolean)
+   is
+      Alpha, Beta, G : Euclidean_Ring;
+   begin
+      if X = Zero then
+         Is_Unit := False;
+         return;
+      end if;
+
+      Gcd (A     => X,
+           B     => Modulus,
+           Alpha => Alpha,
+           Beta  => Beta,
+           Gcd   => G);
+
+      if Generic_GCD.Is_Unit (G) then
+         --
+         --  Why do we check that G is a unit and not just One?
+         --  Remember that the GCD is defined modulo the product by a unit
+         --  therefore, there is no guarantee that G will be One if X
+         --  and Modulus are relatively prime, but we know that it will
+         --  be a unit.
+         --
+         Is_Unit := True;
+         Inverse := Alpha / G;
+
+      else
+         Is_Unit := False;
+      end if;
+   end Inv_Mod;
+
 end Generic_GCD;

@@ -46,7 +46,7 @@ procedure Main is
    is (Image (X, Image'Access));
 
    function Degree (P : Polynomial) return Integer
-   is (if p.Is_Zero then -1 else To_Integer (P.Degree));
+   is (if P.Is_Zero then -1 else To_Integer (P.Degree));
 
    package P_Gcd is
      new Generic_GCD (Euclidean_Ring => Polynomial,
@@ -88,6 +88,10 @@ begin
 
    Put_Line (To_String (P (4.5)));
 
-   Put_Line (Image (P_Gcd.GCD (A => To_Polynomial((1.0, 2.0, 1.0)),
-                               B => To_Polynomial((1.0, 3.0, 2.0)))));
+   Put_Line (Image (P_Gcd.GCD (A => To_Polynomial ((1.0, 2.0, 1.0)),
+                               B => To_Polynomial ((1.0, 3.0, 2.0)))));
+
+   Put_Line (Image (P_Gcd.Inv_Mod (x => To_Polynomial ((1.0, 2.0)),
+                               modulus => To_Polynomial ((1.0, 2.0, 1.0)))));
+
 end Main;
