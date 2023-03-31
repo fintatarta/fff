@@ -5,7 +5,7 @@ with Ada.Text_IO; use Ada.Text_IO;
 with Generic_Polynomials;
 with Generic_GCD;
 
-procedure Main is
+procedure Test_Poly_And_Gcd is
    use Ada.Numerics.Big_Numbers.Big_Reals;
    use Ada.Numerics.Big_Numbers;
    use type Ada.Numerics.Big_Numbers.Big_Integers.Big_Integer;
@@ -94,4 +94,4 @@ begin
    Put_Line (Image (P_Gcd.Inv_Mod (x => To_Polynomial ((1.0, 2.0)),
                                modulus => To_Polynomial ((1.0, 2.0, 1.0)))));
 
-end Main;
+end Test_Poly_And_Gcd;

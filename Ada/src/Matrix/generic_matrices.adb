@@ -1,4 +1,8 @@
 pragma Ada_2012;
+with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
+with Ada.Characters.Latin_1;
+with Ada.Text_IO; use Ada.Text_IO;
+
 package body Generic_Matrices is
 
    function "-" (X, Y : Ring_Type) return Ring_Type
@@ -429,4 +433,55 @@ package body Generic_Matrices is
       end return;
    end "**";
 
+   function To_String (X     : Matrix;
+                       Image : access function (El : Ring_Type) return String)
+                       return String
+   is
+      Entries : array (1 .. X.N_Rows, 1 .. X.N_Cols) of Unbounded_String;
+      Column_Width : array (1 .. X.N_Cols) of Natural := (others => 0);
+
+      function Pad_To (Item : Unbounded_String;
+                       Size : Natural)
+                       return Unbounded_String
+        with
+          Pre => Length (Item) <= Size,
+          Post => Length (Pad_To'Result) = Size;
+
+      function Pad_To (Item : Unbounded_String;
+                       Size : Natural)
+                       return Unbounded_String
+      is (((Size - Length (Item)) * ' ') & Item);
+   begin
+      for R in 1 .. X.N_Rows loop
+         for C in 1 .. X.N_Cols loop
+            Entries (R, C) := To_Unbounded_String (Image (X (R, C)));
+
+            Column_Width (C) :=
+              Natural'Max (Column_Width (C), Length (Entries (R, C)));
+         end loop;
+      end loop;
+
+      --  for G of Column_Width loop
+      --     Put_Line (Standard_Error, G'Image);
+      --  end loop;
+
+      declare
+         use Ada.Characters.Latin_1;
+
+         Accumulator : Unbounded_String;
+      begin
+         for R in 1 .. X.N_Rows loop
+            for C in 1 .. X.N_Cols loop
+               Accumulator := Accumulator &
+                 " " & Pad_To (Entries (R, C), Column_Width (C)) & " ";
+            end loop;
+
+            Accumulator := Accumulator & LF;
+         end loop;
+
+
+         return To_String (Accumulator);
+      end;
+
+   end To_String;
 end Generic_Matrices;

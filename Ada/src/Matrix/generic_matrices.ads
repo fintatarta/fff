@@ -10,8 +10,8 @@ generic
    with function "-" (X : Ring_Type) return Ring_Type is <>;
    with function "*" (X, Y : Ring_Type) return Ring_Type is <>;
 
-   with function Is_Unit (X : Ring_Type) return Boolean is <>;
-   with function Inv (X : Ring_Type) return Ring_Type is <>;
+   --  with function Is_Unit (X : Ring_Type) return Boolean is <>;
+   --  with function Inv (X : Ring_Type) return Ring_Type is <>;
 package Generic_Matrices is
    type Matrix is tagged private
      with
@@ -229,6 +229,10 @@ package Generic_Matrices is
    function Scalar_Product (X, Y : Matrix) return Ring_Type
      with
        Pre => X.Is_Vector and Y.Is_Vector and X.Length = Y.Length;
+
+   function To_String (X     : Matrix;
+                       Image : access function (El : Ring_Type) return String)
+                       return String;
 
 private
    use Ada.Containers;
