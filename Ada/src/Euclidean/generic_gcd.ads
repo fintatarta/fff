@@ -11,7 +11,7 @@ generic
    with function "mod" (X, Y : Euclidean_Ring) return Euclidean_Ring is <>;
    with function "/" (X, Y : Euclidean_Ring) return Euclidean_Ring is <>;
 
-   with function Degree (X : Euclidean_Ring) return Natural;
+   with function Degree (X : Euclidean_Ring) return Integer is <>;
 package Generic_GCD is
    function GCD (A, B : Euclidean_Ring) return Euclidean_Ring
      with

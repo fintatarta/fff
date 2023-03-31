@@ -69,6 +69,35 @@ package body Generic_GCD is
              Status (Row, 3)  = Status (Row, 1) * A + Status (Row, 2) * B)
         with Ghost;
 
+      procedure GCD_Step (Status : in out Status_Matrix)
+        with
+          Pre =>
+            Is_Coherent (Status) and
+            Is_Ordered (Status) and
+            Bottom (Status) /= Zero,
+            Post =>
+              Is_Coherent (Status) and
+              Is_Ordered (Status) and
+              Degree (Bottom (Status)) < Degree (Bottom (Status'Old));
+
+      procedure GCD_Step (Status : in out Status_Matrix)
+      is
+         M : constant Euclidean_Ring := Top (Status) mod Bottom (Status);
+
+         Quotient : constant Euclidean_Ring :=
+                      (Top (Status) + (-M)) / Bottom (Status);
+      begin
+         pragma Assert
+           (Top (Status) = Quotient * Bottom (Status) + M and
+                Degree (M) < Degree (Bottom (Status)));
+
+         Combine_Rows (Status, -Quotient);
+
+         pragma Assert (Top (Status) = M);
+
+         Swap_Rows (Status);
+      end GCD_Step;
+
    begin
       if A = Zero or B = Zero then
          raise Constraint_Error;
@@ -83,29 +112,15 @@ package body Generic_GCD is
 
       pragma Assert (Is_Coherent (Status) and Is_Ordered (Status));
 
+
       while Bottom (Status) /= Zero loop
          pragma Loop_Invariant (Is_Ordered (Status) and Is_Coherent (Status));
-         pragma Loop_Variant (Decreases => Degree (Top (Status)));
+         pragma Loop_Variant (Decreases => Degree (Bottom (Status)));
 
-         declare
-            M : constant Euclidean_Ring := Top (Status) mod Bottom (Status);
-
-            Quotient : constant Euclidean_Ring :=
-                         (Top (Status) + (-M)) / Bottom (Status);
-         begin
-            pragma Assert
-              (Top (Status) = Quotient * Bottom (Status) + M and
-                   Degree (M) < Degree (Bottom (Status)));
-
-            Combine_Rows (Status, -Quotient);
-
-            pragma Assert (Top (Status) = M);
-
-            Swap_Rows (Status);
-         end;
+         GCD_Step (Status);
       end loop;
 
-      pragma Assert (Is_Coherent (Status) and bottom(status) = Zero);
+      pragma Assert (Is_Coherent (Status) and Bottom (Status) = Zero);
 
       Alpha := Status (1, 1);
       Beta  := Status (1, 2);

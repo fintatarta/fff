@@ -1,7 +1,9 @@
 with Ada.Numerics.Big_Numbers.Big_Integers;
+with Ada.Numerics.Big_Numbers.Big_Reals;
+
 with Ada.Text_IO; use Ada.Text_IO;
 with Generic_Polynomials;
-with Ada.Numerics.Big_Numbers.Big_Reals;
+with Generic_GCD;
 
 procedure Main is
    use Ada.Numerics.Big_Numbers.Big_Reals;
@@ -43,6 +45,15 @@ procedure Main is
    function Image (X : Polynomial) return String
    is (Image (X, Image'Access));
 
+   function Degree (P : Polynomial) return Integer
+   is (if p.Is_Zero then -1 else To_Integer (P.Degree));
+
+   package P_Gcd is
+     new Generic_GCD (Euclidean_Ring => Polynomial,
+                      Zero           => P_Float.Zero,
+                      One            => P_Float.One,
+                      "/"            => Div);
+
    P : constant Polynomial := To_Polynomial ((1.0, 2.0, 3.0));
 
    Q : constant Polynomial := To_Polynomial ((0.0, 1.0, -3.0, 4.2));
@@ -76,4 +87,7 @@ begin
    Put_Line ("Q=" & Image (A) & "; Rem=" & Image (B));
 
    Put_Line (To_String (P (4.5)));
+
+   Put_Line (Image (P_Gcd.GCD (A => To_Polynomial((1.0, 2.0, 1.0)),
+                               B => To_Polynomial((1.0, 3.0, 2.0)))));
 end Main;
