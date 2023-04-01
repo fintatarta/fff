@@ -6,6 +6,8 @@ with Ada.Text_IO; use Ada.Text_IO;
 with Generic_Matrices;
 with Generic_Lup;
 
+with Ring_Mod_N;
+
 procedure Test_Matrices is
    use Ada.Numerics.Big_Numbers.Big_Reals;
    use Ada.Numerics.Big_Numbers.Big_Integers;
@@ -25,7 +27,6 @@ procedure Test_Matrices is
                            Ring_Zero => Zero,
                            Ring_One  => One);
 
-   use Mtx;
 
    package My_LUP is
      new Generic_LUP (Field_Type => Big_Real,
@@ -33,7 +34,7 @@ procedure Test_Matrices is
                       One        => One,
                       Matrices   => Mtx);
 
-   use My_LUP;
+   use Mtx, My_LUP;
 
    function Image (X : Big_Real) return String
    is (if Numerator (X) = 0 then
@@ -53,9 +54,39 @@ procedure Test_Matrices is
                                             2 => (2.0, 3.5, 0.5),
                                             3 => (5.0, 1.0, 1.0)));
 
-   C       : constant Matrix := To_Matrix((1 => (1 => 1.0),
-                                           2 => (1 => 1.0),
-                                           3 => (1 => 1.0)));
+   C       : constant Matrix := To_Matrix ((1 => (1 => 1.0),
+                                            2 => (1 => 1.0),
+                                            3 => (1 => 1.0)));
+   type Zorro is mod 17;
+
+   package R is new Ring_Mod_N (Zorro);
+   use R;
+
+
+   package Mtx_Mod is
+     new Generic_Matrices (Ring_Type => Zorro,
+                           Ring_Zero => 0,
+                           Ring_One  => 1);
+
+   package Lud_Mod is
+     new Generic_LUP (Field_Type => Zorro,
+                      Zero       => 0,
+                      One        => 1,
+                      Matrices   => Mtx_Mod);
+
+
+
+   G       : constant Zorro := 4;
+   W       : Zorro;
+
+   Q : constant Mtx_Mod.Matrix := Mtx_Mod.To_Matrix ((1 => (1, 2, 3),
+                                             2 => (3, 7, 9),
+                                             3 => (4, 4, 6)));
+
+   Qu, Ql, Qp : Mtx_Mod.Matrix;
+
+   function Image (X : Zorro) return String
+   is (X'Image);
 begin
    B := A * A - A;
 
@@ -70,7 +101,7 @@ begin
    Put_Line (To_String (Identity (4, 5), Image'Access));
    Put_Line (To_String (Mtx.Zero (B)));
 
-   LUP (X => x,
+   LUP (X => X,
         L => L,
         U => U,
         P => P);
@@ -83,4 +114,20 @@ begin
 
    Put_Line (To_String (Solve_Linear_System (X, C)));
    Put_Line (To_String (To_Real (2) * (Determinant (X) * Inverse (X))));
+
+   W := 3 / G;
+
+   Put_Line (W'Image & ", " & Zorro'Image (W * G) & "=3?");
+
+   Mtx_Mod.Register_Printer (Image'Access);
+
+   Lud_Mod.LUP (X => Q,
+                L => Ql,
+                U => Qu,
+                P => Qp);
+   Put_Line (Mtx_Mod.To_String (Ql));
+   Put_Line (Mtx_Mod.To_String (Qu));
+   Put_Line (Mtx_Mod.To_String (Qp));
+
+   Put_Line (Mtx_Mod.To_String (Lud_Mod.Inverse (Q)));
 end Test_Matrices;
