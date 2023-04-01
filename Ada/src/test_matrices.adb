@@ -52,6 +52,10 @@ procedure Test_Matrices is
    X       : constant Matrix := To_Matrix ((1 => (1.0, 2.0, 3.0),
                                             2 => (2.0, 3.5, 0.5),
                                             3 => (5.0, 1.0, 1.0)));
+
+   C       : constant Matrix := To_Matrix((1 => (1 => 1.0),
+                                           2 => (1 => 1.0),
+                                           3 => (1 => 1.0)));
 begin
    B := A * A - A;
 
@@ -77,5 +81,6 @@ begin
 
    Put_Line (Image (Determinant (X)));
 
-   Put_Line (To_String(Inverse (X)));
+   Put_Line (To_String (Solve_Linear_System (X, C)));
+   Put_Line (To_String (To_Real (2) * (Determinant (X) * Inverse (X))));
 end Test_Matrices;

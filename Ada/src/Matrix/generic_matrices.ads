@@ -9,9 +9,6 @@ generic
    with function "+" (X, Y : Ring_Type) return Ring_Type is <>;
    with function "-" (X : Ring_Type) return Ring_Type is <>;
    with function "*" (X, Y : Ring_Type) return Ring_Type is <>;
-
-   --  with function Is_Unit (X : Ring_Type) return Boolean is <>;
-   --  with function Inv (X : Ring_Type) return Ring_Type is <>;
 package Generic_Matrices is
    type Matrix is tagged private
      with

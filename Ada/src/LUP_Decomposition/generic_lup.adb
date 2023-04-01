@@ -316,60 +316,6 @@ package body Generic_LUP is
 
       return Result;
    end Determinant;
-   --
-   --  ------------
-   --  -- Column --
-   --  ------------
-   --
-   --  function Column (A : Matrix; Col : Index_Type) return Vector
-   --  is
-   --  begin
-   --
-   --     return Result : Matrix := Matrices.zero do
-   --        for Row in Result'Range loop
-   --           Result (Row) := A (Row, Col);
-   --        end loop;
-   --     end return;
-   --
-   --  end Column;
-   --
-   --  ---------
-   --  -- "*" --
-   --  ---------
-   --
-   --  function "*" (C : Field_Type; V : Vector) return Vector
-   --  is
-   --  begin
-   --
-   --     return Result : Vector (V'Range) do
-   --        for Row in Result'Range loop
-   --           Result (Row) := C * V (Row);
-   --        end loop;
-   --     end return;
-   --  end "*";
-   --
-   --  ---------
-   --  -- "-" --
-   --  ---------
-   --  function "-" (X, Y : Vector) return Vector
-   --    with
-   --      Pre => Have_Equal_Size (X, Y);
-   --
-   --  function "-" (X, Y : Vector) return Vector
-   --  is
-   --  begin
-   --     if not Have_Equal_Size (X, Y) then
-   --        raise Constraint_Error;
-   --     end if;
-   --
-   --     return Result : Vector (X'Range) do
-   --        for Row in Result'Range loop
-   --           Result (Row) := X (Row)-Y (Row);
-   --        end loop;
-   --     end return;
-   --
-   --  end "-";
-   --
    ---------------------------
    -- Solve_Upper_Triangual --
    ---------------------------
@@ -456,9 +402,23 @@ package body Generic_LUP is
 
    function Upper_Triangular_Inverse (U : Matrix) return Matrix
    is
+      Z : constant Matrix := Matrices.Zero (N_Rows => u.N_Cols,
+                                            N_Cols => 1);
+
+      X, C : Matrix;
    begin
-      raise Program_Error;
-      return Empty_Matrix;
+      return Result : Matrix := Matrices.Zero (U) do
+         for Col in 1 .. U.N_Cols loop
+            C := Z;
+            C (Col, 1) := One;
+
+            X := Solve_Upper_Triangular (U, C);
+
+            for Row in 1 .. U.N_Rows loop
+               Result (Row, Col) := X (Row, 1);
+            end loop;
+         end loop;
+      end return;
    end Upper_Triangular_Inverse;
 
    ------------------------------

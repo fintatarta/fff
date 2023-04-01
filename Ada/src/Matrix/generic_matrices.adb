@@ -456,7 +456,7 @@ package body Generic_Matrices is
 
    function To_String (X : Matrix) return String
    is (if Default_Printer = null then
-          raise Constraint_Error
+          raise Constraint_Error with "No default ring printer"
        else
           To_String (X, Default_Printer.all));
 
