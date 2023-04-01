@@ -1,9 +1,13 @@
 pragma Ada_2012;
 with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 with Ada.Characters.Latin_1;
+
+pragma Warnings (Off, "no entities of ""Ada.Text_IO"" are referenced");
+pragma Warnings (Off, "use clause for package ""Text_IO"" has no effect");
 with Ada.Text_IO; use Ada.Text_IO;
 
 package body Generic_Matrices is
+   Default_Printer : Ring_Printer_Access := null;
 
    function "-" (X, Y : Ring_Type) return Ring_Type
    is (X + (-Y));
@@ -110,7 +114,7 @@ package body Generic_Matrices is
       return Result : Ring_Array (1 .. X.N_Rows, 1 .. X.N_Cols) do
 
          for Row in Result'Range (1) loop
-            for col in Result'Range (2) loop
+            for Col in Result'Range (2) loop
                Result (Row, Col) := X (Row, Col);
             end loop;
          end loop;
@@ -433,11 +437,38 @@ package body Generic_Matrices is
       end return;
    end "**";
 
+   ---------------
+   -- To_String --
+   ---------------
+
    function To_String (X     : Matrix;
-                       Image : access function (El : Ring_Type) return String)
+                       Image : Ring_Printer_Function)
                        return String
    is
-      Entries : array (1 .. X.N_Rows, 1 .. X.N_Cols) of Unbounded_String;
+      Printer : constant Ring_Printer_Callback := (Callback => Image);
+   begin
+      return To_String (X, Printer);
+   end To_String;
+
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String (X : Matrix) return String
+   is (if Default_Printer = null then
+          raise Constraint_Error
+       else
+          To_String (X, Default_Printer.all));
+
+   ---------------
+   -- To_String --
+   ---------------
+
+   function To_String (X       : Matrix;
+                       Printer : Ring_Printer_Interface'Class)
+                       return String
+   is
+      Entries      : array (1 .. X.N_Rows, 1 .. X.N_Cols) of Unbounded_String;
       Column_Width : array (1 .. X.N_Cols) of Natural := (others => 0);
 
       function Pad_To (Item : Unbounded_String;
@@ -454,7 +485,7 @@ package body Generic_Matrices is
    begin
       for R in 1 .. X.N_Rows loop
          for C in 1 .. X.N_Cols loop
-            Entries (R, C) := To_Unbounded_String (Image (X (R, C)));
+            Entries (R, C) := To_Unbounded_String (Printer.Image (X (R, C)));
 
             Column_Width (C) :=
               Natural'Max (Column_Width (C), Length (Entries (R, C)));
@@ -484,4 +515,36 @@ package body Generic_Matrices is
       end;
 
    end To_String;
+
+   ----------------------
+   -- Register_Printer --
+   ----------------------
+
+   procedure Register_Printer (Printer : Ring_Printer_Function)
+   is
+      P : constant Ring_Printer_Access := new Ring_Printer_Callback'(Callback => Printer);
+   begin
+      Register_Printer (p);
+   end Register_Printer;
+
+   ----------------------
+   -- Register_Printer --
+   ----------------------
+
+   procedure Register_Printer (Printer : Ring_Printer_Access)
+   is
+   begin
+      Default_Printer := printer;
+   end Register_Printer;
+
+   -----------
+   -- Image --
+   -----------
+
+   function Image (Printer : Ring_Printer_Callback;
+                   Item    : Ring_Type)
+                   return String
+   is (Printer.Callback (Item));
+
+
 end Generic_Matrices;

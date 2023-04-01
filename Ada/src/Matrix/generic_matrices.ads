@@ -84,13 +84,13 @@ package Generic_Matrices is
      with
        Post =>
          To_Matrix'Result.N_Rows = X'Length (1) and
-         To_Matrix'Result.N_cols = X'Length (2);
+         To_Matrix'Result.N_Cols = X'Length (2);
 
    function To_Array (X : Matrix) return Ring_Array
-   with
+     with
        Post =>
          X.N_Rows = To_Array'Result'Length (1) and
-         X.N_cols = To_Array'Result'Length (2);
+         X.N_Cols = To_Array'Result'Length (2);
 
 
    function Zero (N : Index_Type) return Matrix
@@ -230,10 +230,32 @@ package Generic_Matrices is
      with
        Pre => X.Is_Vector and Y.Is_Vector and X.Length = Y.Length;
 
+   type Ring_Printer_Function is
+     access function (El : Ring_Type)
+                      return String;
+
+   type Ring_Printer_Interface is interface;
+
+   type Ring_Printer_Access is access all Ring_Printer_Interface'Class;
+
+   function Image (Printer : Ring_Printer_Interface;
+                   Item    : Ring_Type)
+                   return String
+                   is abstract;
+
    function To_String (X     : Matrix;
-                       Image : access function (El : Ring_Type) return String)
+                       Image : Ring_Printer_Function)
                        return String;
 
+   function To_String (X       : Matrix;
+                       Printer : Ring_Printer_Interface'Class)
+                       return String;
+
+   function To_String (X : Matrix) return String;
+
+   procedure Register_Printer (Printer : Ring_Printer_Function);
+
+   procedure Register_Printer (Printer : Ring_Printer_Access);
 private
    use Ada.Containers;
 
@@ -265,5 +287,15 @@ private
    Empty_Matrix : constant Matrix := Matrix'(N_Rows => 0,
                                              N_Cols => 0,
                                              Data   => Ring_Vectors.Empty_Vector);
+
+   type Ring_Printer_Callback is
+     new Ring_Printer_Interface  with
+      record
+         Callback : Ring_Printer_Function;
+      end record;
+
+   function Image (Printer : Ring_Printer_Callback;
+                   Item    : Ring_Type)
+                   return String;
 
 end Generic_Matrices;

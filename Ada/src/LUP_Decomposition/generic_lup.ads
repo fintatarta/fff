@@ -10,7 +10,6 @@ generic
    with function "-" (X : Field_Type) return Field_Type is <>;
    with function "*" (X, Y : Field_Type) return Field_Type is <>;
    with function Inv (X : Field_Type) return Field_Type is <>;
-   with function Is_Unit (X : Field_Type) return Boolean is <>;
 
    with package Matrices is new Generic_Matrices (Ring_Type => Field_Type,
                                                   Ring_Zero => Zero,
