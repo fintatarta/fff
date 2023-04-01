@@ -79,6 +79,31 @@ package Generic_LUP is
      with
        Pre => Is_Square (X);
 
+   function Upper_Triangular_Inverse (U : Matrix) return Matrix
+     with
+       Pre => Is_Square (U) and
+       Is_Upper_Triangular (U) and
+       (for all I in 1 .. U.N_Rows  => U (I, I) /= Zero),
+       Post =>
+         Have_Equal_Size (U, Upper_Triangular_Inverse'Result) and
+         U * Upper_Triangular_Inverse'Result = Identity (U);
+
+   function Lower_Triangular_Inverse (L : Matrix) return Matrix
+     with
+       Pre => Is_Square (L) and
+       Is_Lower_Triangular (L) and
+       (for all I in 1 .. L.N_Rows  => L (I, I) /= Zero),
+       Post =>
+         Have_Equal_Size (L, Lower_Triangular_Inverse'Result) and
+         L * Lower_Triangular_Inverse'Result = Identity (L);
+
+   function Inverse (X : Matrix) return Matrix
+     with
+       Pre => Is_Square (X) ,
+       Post =>
+         Have_Equal_Size (x, Inverse'Result) and
+         X * Inverse'Result = Identity (X);
+
    function Solve_Upper_Triangular (U : Matrix; B : Matrix) return Matrix
      with
        Pre =>
@@ -95,13 +120,13 @@ package Generic_LUP is
      with
        Pre =>
          B.Is_Column_Vector and
-         l.N_Cols = B.N_Rows and
-         Is_Square (l) and
-         Is_Lower_Triangular (l) and
-         (for all I in 1 .. l.N_Rows  => l (I, I) /= Zero),
+         L.N_Cols = B.N_Rows and
+         Is_Square (L) and
+         Is_Lower_Triangular (L) and
+         (for all I in 1 .. L.N_Rows  => L (I, I) /= Zero),
          Post =>
            Have_Equal_Size (B, Solve_Lower_Triangular'Result) and
-           l * Solve_Lower_Triangular'Result = B;
+           L * Solve_Lower_Triangular'Result = B;
 
 
    function Solve_Linear_System (A : Matrix; B : Matrix) return Matrix
@@ -113,6 +138,7 @@ package Generic_LUP is
          Post =>
            Have_Equal_Size (B, Solve_Linear_System'Result) and
            A * Solve_Linear_System'Result = B;
+
 
    Singular_Matrix : exception;
 

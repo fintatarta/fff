@@ -27,13 +27,13 @@ procedure Test_Matrices is
 
    use Mtx;
 
-   package LUP is
+   package My_LUP is
      new Generic_LUP (Field_Type => Big_Real,
                       Zero       => Zero,
                       One        => One,
                       Matrices   => Mtx);
 
-   use LUP;
+   use My_LUP;
 
    function Image (X : Big_Real) return String
    is (if Numerator (X) = 0 then
@@ -44,9 +44,14 @@ procedure Test_Matrices is
           To_Quotient_String (X));
 
 
-   A : constant Matrix := To_Matrix ((1 => (1.0, 2.0),
-                                      2 => (3.0, 4.0)));
-   B : Matrix;
+   A       : constant Matrix := To_Matrix ((1 => (1.0, 2.0),
+                                            2 => (3.0, 4.0)));
+   B       : Matrix;
+   U, L, P : Matrix;
+
+   X       : constant Matrix := To_Matrix ((1 => (1.0, 2.0, 3.0),
+                                            2 => (2.0, 3.5, 0.5),
+                                            3 => (5.0, 1.0, 1.0)));
 begin
    B := A * A - A;
 
@@ -60,4 +65,17 @@ begin
    Put_Line (To_String (Reverse_Identity (4), Image'Access));
    Put_Line (To_String (Identity (4, 5), Image'Access));
    Put_Line (To_String (Mtx.Zero (B)));
+
+   LUP (X => x,
+        L => L,
+        U => U,
+        P => P);
+
+   Put_Line (To_String (L));
+   Put_Line (To_String (U));
+   Put_Line (To_String (P));
+
+   Put_Line (Image (Determinant (X)));
+
+   Put_Line (To_String(Inverse (X)));
 end Test_Matrices;

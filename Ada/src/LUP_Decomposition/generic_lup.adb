@@ -266,8 +266,6 @@ package body Generic_LUP is
                   end if;
                end if;
             end;
-
-            raise Program_Error;
          end loop;
       end De_Intertwine_Actions;
 
@@ -451,6 +449,44 @@ package body Generic_LUP is
 
       return Solve_Upper_Triangular (U, Solve_Lower_Triangular (L, P * B));
    end Solve_Linear_System;
+
+   ------------------------------
+   -- Upper_Triangular_Inverse --
+   ------------------------------
+
+   function Upper_Triangular_Inverse (U : Matrix) return Matrix
+   is
+   begin
+      raise Program_Error;
+      return Empty_Matrix;
+   end Upper_Triangular_Inverse;
+
+   ------------------------------
+   -- Lower_Triangular_Inverse --
+   ------------------------------
+
+   function Lower_Triangular_Inverse (L : Matrix) return Matrix
+   is
+      U : constant Matrix := Flip_Lr (Flip_Ud (L));
+   begin
+      return Flip_Lr (Flip_Ud (Upper_Triangular_Inverse (U)));
+   end Lower_Triangular_Inverse;
+
+   -------------
+   -- Inverse --
+   -------------
+
+   function Inverse (X : Matrix) return Matrix
+   is
+      U, L, P : Matrix;
+   begin
+      LUP (X => X,
+           L => L,
+           U => U,
+           P => P);
+
+      return Upper_Triangular_Inverse (U) * Lower_Triangular_Inverse (L) * P;
+   end Inverse;
 
 
 end Generic_LUP;
