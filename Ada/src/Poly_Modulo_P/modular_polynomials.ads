@@ -23,6 +23,9 @@ generic
 package Modular_Polynomials is
    type Polynomial_Mod is  private;
 
+   Zero : constant Polynomial_Mod;
+   One : constant Polynomial_Mod;
+
    function To_Polymod (X : Poly.Polynomial) return Polynomial_Mod;
 
    function To_Polynomial (X : Polynomial_Mod) return Poly.Polynomial;
@@ -52,6 +55,10 @@ private
          P : Poly.Polynomial;
       end record;
 
+
+
+   Zero : constant Polynomial_Mod := (P => Poly.Zero);
+   One : constant Polynomial_Mod := (P => Poly.One);
 
    function To_Polymod (X : Poly.Polynomial) return Polynomial_Mod
    is (Polynomial_Mod'(P => X));

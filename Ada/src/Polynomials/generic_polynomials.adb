@@ -4,7 +4,7 @@ with Ada.Strings.Unbounded; use Ada.Strings.Unbounded;
 package body Generic_Polynomials is
 
    function Constant_Part (X : Polynomial) return Field_Type
-   is (X (0));
+   is (X (Exponent_Type'(0)));
 
    function "<" (X, Y : Polynomial_Degree) return Boolean
    is (if X = Minus_Infinity then
@@ -336,7 +336,7 @@ package body Generic_Polynomials is
    ------------
 
    function Degree (X : Polynomial) return Polynomial_Degree
-   is (if X.Coeffs.Last_Index = 0 and then X (0) = Field_Zero then
+   is (if X.Coeffs.Last_Index = 0 and then X (Exponent_Type'(0)) = Field_Zero then
           Minus_Infinity
        else
           To_Degree (Integer (X.Coeffs.Last_Index)));
@@ -366,7 +366,7 @@ package body Generic_Polynomials is
       Accumulator : Unbounded_String := Null_Unbounded_String;
    begin
       if X.Is_A_Constant then
-         return Field_Image (X (0));
+         return Field_Image (X (Exponent_Type'(0)));
       end if;
 
       for N in 0 .. To_Exponent (X.Degree) loop

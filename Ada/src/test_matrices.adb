@@ -5,8 +5,10 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 with Generic_Matrices;
 with Generic_Lup;
+with Modular_Polynomials;
 
 with Ring_Mod_N;
+with Generic_Polynomials;
 
 procedure Test_Matrices is
    use Ada.Numerics.Big_Numbers.Big_Reals;
@@ -74,14 +76,31 @@ procedure Test_Matrices is
                       One        => 1,
                       Matrices   => Mtx_Mod);
 
+   package Poly_R is
+     new Generic_Polynomials (Field_Type => Zorro,
+                              Field_Zero => 0,
+                              Field_One  => 1,
+                              Inv        => R.Inv);
+   package Mod_Poly is
+     new Modular_Polynomials (Field_Type => Zorro,
+                              Field_Zero => 0,
+                              Field_One  => 1,
+                              Inv        => R.Inv,
+                              Poly       => Poly_R,
+                              Modulus    => Poly_R.To_Polynomial ((1, 2, 3)));
+   use Mod_Poly;
 
+   package Mtx_Poly_Mod is
+     new Generic_Matrices (Ring_Type => Polynomial_Mod,
+                           Ring_Zero => Mod_Poly.Zero,
+                           Ring_One  => Mod_Poly.One);
 
    G       : constant Zorro := 4;
    W       : Zorro;
 
    Q : constant Mtx_Mod.Matrix := Mtx_Mod.To_Matrix ((1 => (1, 2, 3),
-                                             2 => (3, 7, 9),
-                                             3 => (4, 4, 6)));
+                                                      2 => (3, 7, 9),
+                                                      3 => (4, 4, 6)));
 
    Qu, Ql, Qp : Mtx_Mod.Matrix;
 
