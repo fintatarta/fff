@@ -19,7 +19,7 @@ package body Generic_LUP is
    function Last  (X : Index_Range) return Index_Type
    is (X.Last);
 
-   -----------
+   ---------
    -- Is_In --
    -----------
 
@@ -109,7 +109,11 @@ package body Generic_LUP is
    -- LUP --
    ---------
 
-   procedure LUP (X : Matrix; L : out Matrix; U : out Matrix; P : out Matrix)
+   procedure LUP (X           : Matrix;
+                  L           : out Matrix;
+                  U           : out Matrix;
+                  P           : out Matrix;
+                  Is_Singular : out Boolean)
    is
       package Acts is new Actions;
       use Acts;
@@ -121,12 +125,14 @@ package body Generic_LUP is
 
 
       procedure To_Upper_Triangular (U               : in out Matrix;
-                                     Applied_Actions : in out Action_Lists.List)
+                                     Applied_Actions : in out Action_Lists.List;
+                                     Is_Singular     : out Boolean)
         with
-          Post => Is_Upper_Triangular (U);
+          Post => Is_Singular or else Is_Upper_Triangular (U);
 
       procedure To_Upper_Triangular (U               : in out Matrix;
-                                     Applied_Actions : in out Action_Lists.List)
+                                     Applied_Actions : in out Action_Lists.List;
+                                     Is_Singular     : out Boolean)
       is
          --------------------------------
          -- Bring_Non_Zero_On_Diagonal --
@@ -185,11 +191,15 @@ package body Generic_LUP is
          end Lower_Half_Column;
 
       begin
+         -- Be optimist... This is the default case
+         Is_Singular := False;
+
          for Col in 1 .. U.N_Cols - 1 loop
             Bring_Non_Zero_On_Diagonal (U, Col, Applied_Actions);
 
             if U (Col, Col) = Zero then
-               raise Singular_Matrix;
+               Is_Singular := True;
+               return;
             end if;
 
             pragma Assert (U (Col, Col) /= Zero);
@@ -281,13 +291,18 @@ package body Generic_LUP is
          U := X;
          L := Identity (X);
          P := Identity (X);
+         Is_Singular := False;
 
          return;
       end if;
 
       U := X;
 
-      To_Upper_Triangular (U, Applied_Actions);
+      To_Upper_Triangular (U, Applied_Actions, Is_Singular);
+
+      if Is_Singular then
+         return;
+      end if;
 
       De_Intertwine_Actions (L, P, Applied_Actions, X);
    end LUP;
@@ -297,16 +312,21 @@ package body Generic_LUP is
    -----------------
 
    function Determinant (X : Matrix) return Field_Type is
-      U : Matrix;
-      L : Matrix;
-      P : Matrix;
-
-      Result : Field_Type;
+      U           : Matrix;
+      L           : Matrix;
+      P           : Matrix;
+      Is_Singular : Boolean;
+      Result      : Field_Type;
    begin
-      LUP (X => X,
-           L => L,
-           U => U,
-           P => P);
+      LUP (X           => X,
+           L           => L,
+           U           => U,
+           P           => P,
+           Is_Singular => Is_Singular);
+
+      if Is_Singular then
+         return Zero;
+      end if;
 
       Result := One;
 
@@ -378,9 +398,10 @@ package body Generic_LUP is
    -------------------------
 
    function Solve_Linear_System (A : Matrix; B : Matrix) return Matrix is
-      U : Matrix;
-      L : Matrix;
-      P : Matrix;
+      U           : Matrix;
+      L           : Matrix;
+      P           : Matrix;
+      Is_Singular : Boolean;
    begin
       --
       --  We want to solve A*x = b.  We decompose A as P*A = L*U and the
@@ -388,12 +409,47 @@ package body Generic_LUP is
       --
       --       P*b = c = P*A*x = L*U*x
       --
-      LUP (X => A,
-           L => L,
-           U => U,
-           P => P);
+      LUP (X           => A,
+           L           => L,
+           U           => U,
+           P           => P,
+           Is_Singular => Is_Singular);
+
+      if Is_Singular then
+         raise Singular_Matrix;
+      end if;
 
       return Solve_Upper_Triangular (U, Solve_Lower_Triangular (L, P * B));
+   end Solve_Linear_System;
+
+   procedure Solve_Linear_System (A           : Matrix;
+                                  B           : Matrix;
+                                  Solution    : out Matrix;
+                                  Is_Singular : out Boolean)
+
+   is
+      U           : Matrix;
+      L           : Matrix;
+      P           : Matrix;
+   begin
+      --
+      --  We want to solve A*x = b.  We decompose A as P*A = L*U and the
+      --  system becomes
+      --
+      --       P*b = c = P*A*x = L*U*x
+      --
+      LUP (X           => A,
+           L           => L,
+           U           => U,
+           P           => P,
+           Is_Singular => Is_Singular);
+
+      if Is_Singular then
+         return;
+      else
+         Solution :=
+           Solve_Upper_Triangular (U, Solve_Lower_Triangular (L, P * B));
+      end if;
    end Solve_Linear_System;
 
    ------------------------------
@@ -402,7 +458,7 @@ package body Generic_LUP is
 
    function Upper_Triangular_Inverse (U : Matrix) return Matrix
    is
-      Z : constant Matrix := Matrices.Zero (N_Rows => u.N_Cols,
+      Z : constant Matrix := Matrices.Zero (N_Rows => U.N_Cols,
                                             N_Cols => 1);
 
       X, C : Matrix;
@@ -438,15 +494,48 @@ package body Generic_LUP is
 
    function Inverse (X : Matrix) return Matrix
    is
-      U, L, P : Matrix;
+      U, L, P     : Matrix;
+      Is_Singular : Boolean;
    begin
-      LUP (X => X,
-           L => L,
-           U => U,
-           P => P);
+      LUP (X           => X,
+           L           => L,
+           U           => U,
+           P           => P,
+           Is_Singular => Is_Singular);
+
+
+      if Is_Singular then
+         raise Singular_Matrix;
+      end if;
+
 
       return Upper_Triangular_Inverse (U) * Lower_Triangular_Inverse (L) * P;
    end Inverse;
 
+
+   -------------
+   -- Inverse --
+   -------------
+
+   procedure Inverse (X           : Matrix;
+                      Inv         : out Matrix;
+                      Is_Singular : out Boolean)
+   is
+      U, L, P     : Matrix;
+   begin
+      LUP (X           => X,
+           L           => L,
+           U           => U,
+           P           => P,
+           Is_Singular => Is_Singular);
+
+
+      if Is_Singular then
+         return;
+      end if;
+
+
+      Inv := Upper_Triangular_Inverse (U) * Lower_Triangular_Inverse (L) * P;
+   end Inverse;
 
 end Generic_LUP;
