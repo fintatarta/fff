@@ -23,3 +23,7 @@ package Generic_LUP is
 ```
 
 Note how it is required that `Field_Type` has the neutral elements (`Zero` and `One`), the two operations (`"+"` and `"*"`) together with the inverses (`"-"` and `Inv`).
+
+## Why Ada? :raised_eyebrow:	:astonished:	
+
+Yes, quite an unusual choice, isn't it? The reason is the generic package model of Ada (kind of C++ template, but with a more human syntax) that can mimick quite closely the approach used in algebra. The package `Generic_LUP`  above is an example of the idea.
