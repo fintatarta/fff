@@ -307,6 +307,29 @@ package body Generic_LUP is
       De_Intertwine_Actions (L, P, Applied_Actions, X);
    end LUP;
 
+   ---------
+   -- LUP --
+   ---------
+
+   procedure LUP (X           : Matrix;
+                  L           : out Matrix;
+                  U           : out Matrix;
+                  P           : out Matrix)
+   is
+      Is_Singular : Boolean;
+   begin
+      Lup (X           => X,
+           L           => L,
+           U           => U,
+           P           => P,
+           Is_Singular => Is_Singular);
+
+      if Is_Singular then
+         raise Singular_Matrix;
+      end if;
+   end LUP;
+
+
    -----------------
    -- Determinant --
    -----------------

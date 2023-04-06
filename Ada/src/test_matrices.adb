@@ -106,6 +106,7 @@ procedure Test_Matrices is
 
    function Image (X : Zorro) return String
    is (X'Image);
+
 begin
    B := A * A - A;
 

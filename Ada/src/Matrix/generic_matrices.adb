@@ -7,7 +7,9 @@ pragma Warnings (Off, "use clause for package ""Text_IO"" has no effect");
 with Ada.Text_IO; use Ada.Text_IO;
 
 package body Generic_Matrices is
-   Default_Printer : Ring_Printer_Access := null;
+
+   Default_Printer : Ring_Printers.Printer_Holders.Holder :=
+                       Ring_Printers.Printer_Holders.Empty_Holder;
 
    function "-" (X, Y : Ring_Type) return Ring_Type
    is (X + (-Y));
@@ -445,9 +447,8 @@ package body Generic_Matrices is
                        Image : Ring_Printer_Function)
                        return String
    is
-      Printer : constant Ring_Printer_Callback := (Callback => Image);
    begin
-      return To_String (X, Printer);
+      return To_String (X, Ring_Printers.Callback (Image).Element);
    end To_String;
 
    ---------------
@@ -455,17 +456,17 @@ package body Generic_Matrices is
    ---------------
 
    function To_String (X : Matrix) return String
-   is (if Default_Printer = null then
+   is (if Default_Printer.Is_Empty then
           raise Constraint_Error with "No default ring printer"
        else
-          To_String (X, Default_Printer.all));
+          To_String (X, Default_Printer.Element));
 
    ---------------
    -- To_String --
    ---------------
 
    function To_String (X       : Matrix;
-                       Printer : Ring_Printer_Interface'Class)
+                       Printer : Ring_Printers.Printer_Interface'Class)
                        return String
    is
       Entries      : array (1 .. X.N_Rows, 1 .. X.N_Cols) of Unbounded_String;
@@ -522,29 +523,21 @@ package body Generic_Matrices is
 
    procedure Register_Printer (Printer : Ring_Printer_Function)
    is
-      P : constant Ring_Printer_Access := new Ring_Printer_Callback'(Callback => Printer);
    begin
-      Register_Printer (p);
+      Register_Printer (Ring_Printers.Callback (Printer));
    end Register_Printer;
 
    ----------------------
    -- Register_Printer --
    ----------------------
 
-   procedure Register_Printer (Printer : Ring_Printer_Access)
+   procedure Register_Printer (Printer : Ring_Printers.Printer_Interface'Class)
    is
    begin
-      Default_Printer := printer;
+      Default_Printer.Replace_Element (Printer);
    end Register_Printer;
 
-   -----------
-   -- Image --
-   -----------
 
-   function Image (Printer : Ring_Printer_Callback;
-                   Item    : Ring_Type)
-                   return String
-   is (Printer.Callback (Item));
 
 
 end Generic_Matrices;

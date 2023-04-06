@@ -62,6 +62,24 @@ package Generic_LUP is
                 P * X = L * U
            );
 
+   procedure LUP (X           : Matrix;
+                  L           : out Matrix;
+                  U           : out Matrix;
+                  P           : out Matrix)
+     with
+       Pre =>
+         Is_Square (X) and Determinant (X) /= Zero,
+
+         Post =>
+              Have_Equal_Size (X, L) and
+                Have_Equal_Size (X, U) and
+              Have_Equal_Size (X, P) and
+                Is_Permutation (P) and
+              Is_Lower_Triangular (L) and
+                Has_Unit_Diagonal (L) and
+              Is_Upper_Triangular (U) and
+                P * X = L * U;
+
    --
    -- Almost syntactic sugar: get the determinant of X via
    -- the LUP decomposition
