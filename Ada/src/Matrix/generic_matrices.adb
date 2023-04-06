@@ -8,6 +8,12 @@ with Ada.Text_IO; use Ada.Text_IO;
 
 package body Generic_Matrices is
 
+
+   function Empty_Matrix return Matrix
+   is (Matrix'(N_Rows => 0,
+               N_Cols => 0,
+               Data   => Ring_Vectors.Empty_Vector));
+
    Default_Printer : Ring_Printers.Printer_Holders.Holder :=
                        Ring_Printers.Printer_Holders.Empty_Holder;
 

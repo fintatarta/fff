@@ -37,7 +37,7 @@ package Generic_Matrices is
      with
        Dynamic_Predicate => Square_Matrix.N_Rows = Square_Matrix.N_Cols;
 
-   Empty_Matrix : constant Matrix;
+   function Empty_Matrix return Matrix;
 
    function Total_Size (X : Matrix) return Natural
    is (X.N_Rows * X.N_Cols);
@@ -359,9 +359,9 @@ private
 
    type Reference_Type (Element : not null access Ring_Type) is null record;
 
-   Empty_Matrix : constant Matrix := Matrix'(N_Rows => 0,
-                                             N_Cols => 0,
-                                             Data   => Ring_Vectors.Empty_Vector);
+   --  Empty_Matrix : constant Matrix := Matrix'(N_Rows => 0,
+   --                                            N_Cols => 0,
+   --                                            Data   => Ring_Vectors.Empty_Vector);
    --
    --  type Ring_Printer_Callback is
    --    new Ring_Printer_Interface  with
