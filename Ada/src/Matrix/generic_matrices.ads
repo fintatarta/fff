@@ -85,7 +85,7 @@ package Generic_Matrices is
        Pre => X.Is_Vector and N <= X.Length;
 
    --
-   -- Indexing function (variable indexing) with two indeces
+   -- Indexing function (variable indexing) with two indexes
    --
    function Reference (X        : aliased in out Matrix;
                        Row, Col : in Index_Type)
@@ -94,7 +94,8 @@ package Generic_Matrices is
        Pre => Row <= X.N_Rows and Col <= X.N_Cols;
 
    --
-   --  Usual Ada two-dimensional array of ring elements
+   --  Usual Ada two-dimensional array of ring elements and functions
+   --  to convert back and forth from/to Matrix
    --
    type Ring_Array is array (Positive range <>, Positive range <>) of Ring_Type;
 
@@ -111,7 +112,7 @@ package Generic_Matrices is
          X.N_Cols = To_Array'Result'Length (2);
 
    --
-   -- Many constructors for the zero matrix
+   -- Constructors for the zero matrix
    --
 
    function Zero (N : Index_Type) return Matrix
@@ -133,7 +134,7 @@ package Generic_Matrices is
          Zero'Result.N_Cols = X.N_Cols;
 
    --
-   -- Many constructors for the identity matrix
+   -- Constructors for the identity matrix
    --
 
    function Identity (N : Index_Type) return Matrix
@@ -156,7 +157,7 @@ package Generic_Matrices is
          Identity'Result.N_Cols = N_Cols;
 
    --
-   -- Many constructors for the "reverse identity" matrix, that is,
+   -- Constructors for the "reverse identity" matrix, that is,
    -- the matrix that is equal to 1 only on the non-main diagonal.
    -- Something like this:
    --
@@ -164,6 +165,9 @@ package Generic_Matrices is
    --   0  0  1  0
    --   0  1  0  0
    --   1  0  0  0
+   --
+   --  Yes, you can get the same with Flip_UD(Identity(...)). Yes,
+   --  it is just syntactic sugar.
    --
 
 
@@ -284,9 +288,24 @@ package Generic_Matrices is
          (for all Row in 1 .. X.N_Rows => X (Row, C) = Column'Result (Row, 1));
 
 
+   --
+   --  Scalar product between vectors.  In theory this should be defined
+   --  only for vector of the same type (row or column vectors); nevertheless,
+   --  for the sake of convenience, we are not picky and the function
+   --  accepts any combination of vectors
+   --
    function Scalar_Product (X, Y : Matrix) return Ring_Type
      with
        Pre => X.Is_Vector and Y.Is_Vector and X.Length = Y.Length;
+
+   --
+   --  Ring printer interface.  In order to be able to print a matrix,
+   --  we need to know how to print a ring element.   This can be
+   --  done via a callback function (Ring_Printer_Function) or via
+   --  an object descendant of Ring_Printer_Interface.  The former is
+   --  simpler, the latter gives more flexibility (the printer can
+   --  have an internal state)
+   --
 
    type Ring_Printer_Function is
      access function (El : Ring_Type)
@@ -317,12 +336,6 @@ package Generic_Matrices is
 private
    use Ada.Containers;
 
-   --  function Create (N_Row, N_Cols : Positive) return Matrix
-   --    with
-   --      Post =>
-   --        Create'Result.N_Rows = N_Rows and
-   --        Create'Result.N_Cols = N_Cols;
-
    package Ring_Vectors is
      new Ada.Containers.Vectors (Index_Type   => Index_Type,
                                  Element_Type => Ring_Type);
@@ -331,6 +344,14 @@ private
       record
          N_Rows : Natural := 0;
          N_Cols : Natural := 0;
+         --
+         --  Yes, matrix data are not stored in a 2-dimensional array,
+         --  but in a 1-dimensional vector, addressed in the usual way.
+         --  This is a bit more flexible and, moreover, it does not
+         --  require Matrix to be an indefinite type.  We need to
+         --  be sure to have enough space and the Type_Invariant
+         --  takes care of this
+         --
          Data   : Ring_Vectors.Vector := Ring_Vectors.Empty_Vector;
       end record
      with
@@ -338,7 +359,10 @@ private
 
 
    function To_Index (M : Matrix; Row, Col : Index_Type) return Index_Type
-   is (Row + (Col - Index_Type'First) * M.N_Rows);
+   is (Row + (Col - Index_Type'First) * M.N_Rows)
+     with
+       Pre => Row <= M.N_Rows and Col <= M.N_Cols,
+     Post => To_Index'Result <= M.Data.Last_Index;
 
    type Reference_Type (Element : not null access Ring_Type) is null record;
 
