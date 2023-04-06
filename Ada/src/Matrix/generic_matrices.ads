@@ -1,5 +1,9 @@
 with Ada.Containers.Vectors;
 
+--
+-- This package provides functions for working with matrices with entries
+-- in a ring.
+--
 generic
    type Ring_Type is private;
 
@@ -52,10 +56,17 @@ package Generic_Matrices is
    function Length (X : Matrix) return Positive
    is (Positive'Max (X.N_Rows, X.N_Cols));
 
+   --
+   -- Indexing function with a single index.  X must be a vector
+   --
    function Value (X : Matrix; N : Index_Type) return Ring_Type
      with
        Pre => X.Is_Vector and X.Length >= N;
 
+
+   --
+   -- Indexing function with two indeces
+   --
    function Value (X : Matrix; Row, Col : Index_Type) return Ring_Type
      with
        Pre => Row <= X.N_Rows and Col <= X.N_Cols;
@@ -63,18 +74,28 @@ package Generic_Matrices is
    type Reference_Type (Element : not null access Ring_Type) is private
      with Implicit_Dereference => Element;
 
+   --
+   -- Indexing function (variable indexing, that is, used to update an
+   -- entry) with one index
+   --
    function Reference (X : aliased in out Matrix;
                        N : in Index_Type)
                        return Reference_Type
      with
        Pre => X.Is_Vector and N <= X.Length;
 
+   --
+   -- Indexing function (variable indexing) with two indeces
+   --
    function Reference (X        : aliased in out Matrix;
                        Row, Col : in Index_Type)
                        return Reference_Type
      with
        Pre => Row <= X.N_Rows and Col <= X.N_Cols;
 
+   --
+   --  Usual Ada two-dimensional array of ring elements
+   --
    type Ring_Array is array (Positive range <>, Positive range <>) of Ring_Type;
 
    function To_Matrix (X : Ring_Array) return Matrix
@@ -89,6 +110,9 @@ package Generic_Matrices is
          X.N_Rows = To_Array'Result'Length (1) and
          X.N_Cols = To_Array'Result'Length (2);
 
+   --
+   -- Many constructors for the zero matrix
+   --
 
    function Zero (N : Index_Type) return Matrix
      with
@@ -107,6 +131,10 @@ package Generic_Matrices is
        Post =>
          Zero'Result.N_Rows = X.N_Rows and
          Zero'Result.N_Cols = X.N_Cols;
+
+   --
+   -- Many constructors for the identity matrix
+   --
 
    function Identity (N : Index_Type) return Matrix
      with
@@ -127,6 +155,18 @@ package Generic_Matrices is
          Identity'Result.N_Rows = N_Rows and
          Identity'Result.N_Cols = N_Cols;
 
+   --
+   -- Many constructors for the "reverse identity" matrix, that is,
+   -- the matrix that is equal to 1 only on the non-main diagonal.
+   -- Something like this:
+   --
+   --   0  0  0  1
+   --   0  0  1  0
+   --   0  1  0  0
+   --   1  0  0  0
+   --
+
+
    function Reverse_Identity (N : Index_Type) return Matrix
      with
        Post =>
@@ -146,12 +186,20 @@ package Generic_Matrices is
          Reverse_Identity'Result.N_Rows = N_Rows and
          Reverse_Identity'Result.N_Cols = N_Cols;
 
+   --
+   --  Flip horizontally the matrix (LR=Left-right, named after a similar
+   --  octave/matlab function)
+   --
    function Flip_Lr (X : Matrix) return Matrix
      with
        Post =>
          Flip_Lr'Result.N_Rows = X.N_Rows and
          Flip_Lr'Result.N_Cols = X.N_Cols;
 
+   --
+   --  Flip vertically the matrix (UD=Up-Down, named after a similar
+   --  octave/matlab function)
+   --
    function Flip_Ud (X : Matrix) return Matrix
      with
        Post =>
@@ -213,15 +261,28 @@ package Generic_Matrices is
            X.N_Rows = "**"'Result.N_Rows and
            X.N_Cols = "**"'Result.N_Cols;
 
+   ---
+   -- Extract a row from X
+   --
    function Row (X : Matrix; R : Index_Type) return Matrix
      with
        Pre => R <= X.N_Rows,
-       Post => Row'Result.N_Rows = 1 and Row'Result.N_Cols = X.N_Cols;
+       Post =>
+         Row'Result.N_Rows = 1 and
+         Row'Result.N_Cols = X.N_Cols and
+         (for all Col in 1 .. X.N_Cols => X (R, Col) = Row'Result (1, Col));
 
+   ---
+   -- Extract a column from X
+   --
    function Column (X : Matrix; C : Index_Type) return Matrix
      with
        Pre => C <= X.N_Cols,
-       Post => Column'Result.N_Cols = 1 and Column'Result.N_Rows = X.N_Rows;
+       Post =>
+         Column'Result.N_Cols = 1 and
+         Column'Result.N_Rows = X.N_Rows and
+         (for all Row in 1 .. X.N_Rows => X (Row, C) = Column'Result (Row, 1));
+
 
    function Scalar_Product (X, Y : Matrix) return Ring_Type
      with
