@@ -1,5 +1,3 @@
-with Interfaces;
-
 with Gf_2p_Varsize;
 with Generic_Matrices;
 with Generic_LUP;
@@ -19,11 +17,11 @@ package Secret_Sharing is
 
    use type Field.Galois;
 
-   function To_Galois (X : Secret_Type) return Field.Galois
-   is (Field.To_Galois (Interfaces.Unsigned_64 (X)));
+   function To_Galois  is
+     new Field.To_Galois (Secret_Type);
 
-   function To_secret (X : Field.Galois) return Secret_Type
-   is (Secret_Type(Field.To_Int (X)));
+   function To_Secret is
+     new Field.To_Int (Secret_Type);
 
    package Mtx is
      new Generic_Matrices (Ring_Type => Field.Galois,

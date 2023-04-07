@@ -18,8 +18,6 @@
 --
 --    A, B : Galois;
 --
-with Interfaces;
-use  Interfaces;
 
 generic
    Exponent : Positive;
@@ -27,6 +25,7 @@ generic
 
    pragma Compile_Time_Error (Exponent > 32,
                               "Exponent cannot be larger than 32");
+
 
    Small_Footprint : Boolean := False;
    -- If Small_Footprint is True, use algorithms which are slower, but
@@ -39,7 +38,9 @@ package Gf_2p_Varsize is
    Zero : constant Galois;
    One  : constant Galois;
 
-   Size : constant Interfaces.Unsigned_32;
+   type Size_Type is mod 2 ** 64;
+
+   Size : constant Size_Type := 2 ** Exponent;
    Name : constant String;
 
    function "+" (Left, Right : Galois) return Galois;
@@ -56,15 +57,20 @@ package Gf_2p_Varsize is
    function Is_Unit (X : Galois) return Boolean;
    -- Return True if X is non-zero
 
-   function To_Int (X : Galois) return Interfaces.Unsigned_64;
+   generic
+      type Int_Type is mod <>;
+   function To_Int (X : Galois) return Int_Type;
 
-   function To_Galois (X : Interfaces.Unsigned_64) return Galois;
+   generic
+      type Int_Type is mod <>;
+   function To_Galois (X : Int_Type) return Galois;
 private
-   type Galois is  new Interfaces.Unsigned_64;
+   type Basic_Int is  mod 2 ** 64;
+   type Galois is new Basic_Int;
 
    Zero : constant Galois := 0;
    One  : constant Galois := 1;
 
    Name : constant String   := "GF(2^" & Integer'Image (Exponent) & ")";
-   Size : constant Interfaces.Unsigned_32 := 2 ** Exponent;
+   --  Size : constant Interfaces.Unsigned_64 := 2 ** Exponent;
 end Gf_2p_Varsize;

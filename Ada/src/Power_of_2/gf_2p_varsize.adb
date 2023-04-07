@@ -2,7 +2,7 @@ with Text_Io; use Text_Io;
 with Ada.Unchecked_Conversion;
 
 package body Gf_2p_Varsize is
-   type Largest_Basic_Type is new Interfaces.Unsigned_64;
+   --  type Largest_Basic_Type is mod 2 ** 64;
 
 
 
@@ -79,7 +79,7 @@ package body Gf_2p_Varsize is
    -- to P(x), but the one relative to R(x).  Carry_Table(n)
    -- is the binary word of R(x) for GF(2^n)
    --
-   Carry_Table : constant array (Positive range <>) of Largest_Basic_Type :=
+   Carry_Table : constant array (Positive range <>) of Galois :=
                    (1  => 1,   2 => 3,   3 => 3,
                     4  => 3,   5 => 5,   6 => 27,
                     7  => 3,   8 => 29,  9 => 17,
@@ -141,7 +141,7 @@ package body Gf_2p_Varsize is
 
 
    Overflow_Mask : constant Galois := 2 ** (Exponent - 1);
-   Carry_Mask    : constant Galois := Galois (Carry_Table (Exponent));
+   Carry_Mask    : constant Galois := Carry_Table (Exponent);
 
    function Has_Degree (X   : Galois;
                         Deg : Natural)
@@ -163,16 +163,16 @@ package body Gf_2p_Varsize is
    function Degree (X     : Galois;
                     Bound : Positive := Exponent)
                     return Natural is
-      Mask   : Largest_Basic_Type := 2 ** Bound;
-      Tmp    : constant Largest_Basic_Type := Largest_Basic_Type (X);
+      Mask   : Basic_Int := 2 ** Bound;
+      Tmp    : constant Basic_Int := Basic_Int (X);
       Result : Natural := Bound;
    begin
       -- Put_Line("b=" & Integer'Image(Bound) & "x=" & Image(X));
-      pragma Assert (Mask /= Largest_Basic_Type (Zero));
+      pragma Assert (Mask /= 0);
       pragma Assert (X /= Zero);
-      while (Mask and Tmp) = Largest_Basic_Type (Zero) loop
+      while (Mask and Tmp) = 0 loop
          Result := Result - 1;
-         Mask   := Shift_Right (Mask, 1);
+         Mask   := Mask / 2;
       end loop;
 
       -- Put_Line("d=" & Integer'Image(Result));
@@ -185,15 +185,11 @@ package body Gf_2p_Varsize is
    -- Conversion from/to Integers --
    ---------------------------------
 
-   function To_Int (X : Galois) return Interfaces.Unsigned_64 is
-   begin
-      return Interfaces.Unsigned_64 (X);
-   end To_Int;
+   function To_Int (X : Galois) return Int_Type
+   is (Int_Type (X));
 
-   function To_Galois (X : Interfaces.Unsigned_64) return Galois is
-   begin
-      return Galois (X);
-   end To_Galois;
+   function To_Galois (X : Int_Type) return Galois
+   is (Galois (X));
 
    --  function To_Galois (X : Integer) return Galois is
    --  begin
@@ -248,13 +244,13 @@ package body Gf_2p_Varsize is
    function Shift_Right (X : Galois; N : Natural := 1) return Galois
    is
    begin
-      return Galois (Shift_Right (Unsigned_64 (X), N));
+      return Galois (Basic_Int (X) / 2 ** N);
    end Shift_Right;
 
    function Shift_Left (X : Galois; N : Natural := 1) return Galois
    is
    begin
-      return Galois (Shift_Left (Unsigned_64 (X), N));
+      return Galois (Basic_Int (X) * 2 ** N);
    end Shift_Left;
 
    ----------------------------------

@@ -141,7 +141,7 @@ procedure Secret_Sharing.Main is
          X : constant Matrix := Lup.Solve_Linear_System (A => Vandermonde,
                                                          B => V);
       begin
-         return Secret_Type (To_Int (X (1)));
+         return To_Secret (X (1));
       end;
    end Decode_Secret;
 begin
