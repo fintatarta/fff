@@ -69,6 +69,10 @@ package body Secret_Sharing.Configuration is
       end Parse_Encode_Command;
 
 
+      --------------------------
+      -- Parse_Decode_Command --
+      --------------------------
+
       procedure Parse_Decode_Command
       is
          Pieces_Provided : Points.Point_Array;
@@ -79,12 +83,16 @@ package body Secret_Sharing.Configuration is
          end if;
 
          for I in 2 .. Argument_Count loop
-            if not Points.Is_Valid_Image (Argument (I)) then
+            declare
+               Arg : constant String := Points.Expand (Argument (I));
+            begin
+               if not Points.Is_Valid_Image (Arg) then
                raise Bad_Command_Line
-                 with "Bad data point spec '" & Argument (I) & "'";
-            end if;
+                    with "Bad data point spec '" & Argument (I) & "'";
+               end if;
 
-            Pieces_Provided.Append (Points.Parse (Argument (I)));
+               Pieces_Provided.Append (Points.Parse (Arg));
+            end;
          end loop;
 
          User_Requirements :=

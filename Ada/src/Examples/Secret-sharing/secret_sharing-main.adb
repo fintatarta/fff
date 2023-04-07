@@ -70,7 +70,7 @@ procedure Secret_Sharing.Main is
          function Random_Coefficient return Galois
          is (To_Galois (Rnd.Random (Random_Generator)));
 
-         coeffs : Poly.Coefficient_Array (0 .. Degree);
+         Coeffs : Poly.Coefficient_Array (0 .. Degree);
       begin
          --  Put_Line ("<< 88");
 
@@ -101,13 +101,49 @@ procedure Secret_Sharing.Main is
             declare
                S : constant Secret_Type := Secret_Type (I);
             begin
-               Fragments.append(Point_Type'(X => S,
-                                            Y => To_Secret (P (To_Galois (S)))));
+               Fragments.Append (Point_Type'(X => S,
+                                             Y => To_Secret (P (To_Galois (S)))));
             end;
          end loop;
 
       end return;
    end Encode_Secret;
+
+   function Decode_Secret (Pieces : Points.Point_Array) return Secret_Type
+   is
+      use Mtx;
+
+      procedure Fill_Row (Vandermonde : in out Matrix;
+                          Row         : Positive;
+                          R           : Galois)
+      is
+      begin
+         Vandermonde (Row, 1) := Field.One;
+
+         for Col in 2 .. Vandermonde.N_Cols loop
+            Vandermonde (Row, Col) := Vandermonde (Row, Col - 1) * R;
+         end loop;
+      end Fill_Row;
+
+      Vandermonde : Matrix := Mtx.Zero (Natural (Pieces.Length));
+      V : Matrix := Mtx.Zero (N_Rows => Vandermonde.N_Cols,
+                              N_Cols => 1);
+   begin
+      for Row in 1 .. Vandermonde.N_Rows loop
+
+         V (Row) := To_Galois (Pieces (Row).Y);
+
+         Fill_Row (Vandermonde, Row, To_Galois (Pieces (Row).X));
+
+      end loop;
+
+      declare
+         X : constant Matrix := Lup.Solve_Linear_System (A => Vandermonde,
+                                                         B => V);
+      begin
+         return Secret_Type (To_Int (X (1)));
+      end;
+   end Decode_Secret;
 begin
    -- Be pessimistic, we will set Success at the end
    Set_Exit_Status (Failure);
@@ -128,7 +164,8 @@ begin
          end;
 
       when Configuration.Decode =>
-         raise Program_Error with "Unimplemented";
+         Put_Line
+           (Secret_Type'Image (Decode_Secret (Configuration.Pieces_Provided)));
 
       when Configuration.Help =>
          Put_Line (Standard_Error, Configuration.Help_Text);
