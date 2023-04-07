@@ -72,14 +72,9 @@ procedure Secret_Sharing.Main is
 
          Coeffs : Poly.Coefficient_Array (0 .. Degree);
       begin
-         --  Put_Line ("<< 88");
-
          Rnd.Reset (Random_Generator);
-         --  Put_Line ("<< 77");
 
          for I in Coeffs'Range loop
-            --  Put_Line ("<< 66" & I'Image);
-
             Coeffs (I) :=
               (if I = 0 then  To_Galois (C0) else Random_Coefficient);
          end loop;
@@ -91,8 +86,6 @@ procedure Secret_Sharing.Main is
       P : constant Poly.Polynomial :=
             Random_Polynomial (C0     => Secret,
                                Degree => Threshold - 1);
-
-
    begin
 
       return Fragments : Point_Array do
@@ -126,12 +119,13 @@ procedure Secret_Sharing.Main is
       end Fill_Row;
 
       Vandermonde : Matrix := Mtx.Zero (Natural (Pieces.Length));
-      V : Matrix := Mtx.Zero (N_Rows => Vandermonde.N_Cols,
-                              N_Cols => 1);
+
+      Known_Part  : Matrix := Mtx.Zero (N_Rows => Vandermonde.N_Cols,
+                                        N_Cols => 1);
    begin
       for Row in 1 .. Vandermonde.N_Rows loop
 
-         V (Row) := To_Galois (Pieces (Row).Y);
+         Known_Part (Row) := To_Galois (Pieces (Row).Y);
 
          Fill_Row (Vandermonde, Row, To_Galois (Pieces (Row).X));
 
@@ -139,7 +133,7 @@ procedure Secret_Sharing.Main is
 
       declare
          X : constant Matrix := Lup.Solve_Linear_System (A => Vandermonde,
-                                                         B => V);
+                                                         B => Known_Part);
       begin
          return To_Secret (X (1));
       end;
@@ -151,6 +145,10 @@ begin
    Configuration.Initialize;
 
    case Configuration.Action_Required is
+
+      when Configuration.Help =>
+         Put_Line (Standard_Error, Configuration.Help_Text);
+
       when Configuration.Encode =>
          declare
             Fragments : constant Points.Point_Array :=
@@ -166,9 +164,6 @@ begin
       when Configuration.Decode =>
          Put_Line
            (Secret_Type'Image (Decode_Secret (Configuration.Pieces_Provided)));
-
-      when Configuration.Help =>
-         Put_Line (Standard_Error, Configuration.Help_Text);
 
    end case;
 
