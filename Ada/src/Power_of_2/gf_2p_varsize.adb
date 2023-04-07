@@ -7,6 +7,7 @@ package body Gf_2p_Varsize is
 
 
    package My_Io is new Text_Io.Modular_Io (Galois);
+   pragma Unreferenced (My_Io);
 
    --
    -- A couple of words about the implementation used.  As well known,
@@ -78,7 +79,7 @@ package body Gf_2p_Varsize is
    -- to P(x), but the one relative to R(x).  Carry_Table(n)
    -- is the binary word of R(x) for GF(2^n)
    --
-   Carry_Table : array (Positive range <>) of Largest_Basic_Type :=
+   Carry_Table : constant array (Positive range <>) of Largest_Basic_Type :=
                    (1  => 1,   2 => 3,   3 => 3,
                     4  => 3,   5 => 5,   6 => 27,
                     7  => 3,   8 => 29,  9 => 17,
@@ -163,7 +164,7 @@ package body Gf_2p_Varsize is
                     Bound : Positive := Exponent)
                     return Natural is
       Mask   : Largest_Basic_Type := 2 ** Bound;
-      Tmp    : Largest_Basic_Type := Largest_Basic_Type (X);
+      Tmp    : constant Largest_Basic_Type := Largest_Basic_Type (X);
       Result : Natural := Bound;
    begin
       -- Put_Line("b=" & Integer'Image(Bound) & "x=" & Image(X));
@@ -194,10 +195,10 @@ package body Gf_2p_Varsize is
       return Galois (X);
    end To_Galois;
 
-   function To_Galois (X : Integer) return Galois is
-   begin
-      return Galois (X);
-   end To_Galois;
+   --  function To_Galois (X : Integer) return Galois is
+   --  begin
+   --     return Galois (X);
+   --  end To_Galois;
 
 
 
@@ -246,14 +247,12 @@ package body Gf_2p_Varsize is
 
    function Shift_Right (X : Galois; N : Natural := 1) return Galois
    is
-      use Interfaces;
    begin
-      return Galois (Shift_Right (Unsigned_64 (X), 1));
+      return Galois (Shift_Right (Unsigned_64 (X), N));
    end Shift_Right;
 
    function Shift_Left (X : Galois; N : Natural := 1) return Galois
    is
-      use Interfaces;
    begin
       return Galois (Shift_Left (Unsigned_64 (X), N));
    end Shift_Left;
@@ -266,8 +265,8 @@ package body Gf_2p_Varsize is
    -- Multiply X by x.
    --
    function Gf_Single_Left_Shift (X : Galois)
-                                  return Galois is
-      use Interfaces;
+                                  return Galois
+   is
    begin
       --
       -- Multiply X by x. If the last bit of My_Left is zero,
@@ -306,7 +305,6 @@ package body Gf_2p_Varsize is
    end Gf_Left_Shift;
 
    function Long_Product (Left, Right : Galois) return Galois is
-      use Interfaces;
 
       Result     : Galois := 0;
       My_Left    : Galois := Left;
@@ -346,8 +344,6 @@ package body Gf_2p_Varsize is
 
    function Long_Inverse (X : Galois) return Galois is
       type Matrix_Type is array (1 .. 2, 1 .. 3) of Galois;
-
-      use Interfaces;
 
       procedure Swap (M : in out Matrix_Type) is
          Tmp : Galois;
@@ -610,7 +606,7 @@ begin
 
       Fill_Table :
       declare
-         Generator : Galois := 2;
+         Generator : constant Galois := 2;
          Current   : Galois := 1;
       begin
          for Esp in 0 .. 2 ** Exponent - 2 loop
