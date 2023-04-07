@@ -26,6 +26,17 @@ package Secret_Sharing.Points is
    function Parse (S : String) return Point_Type
      with
        Pre => Is_Valid_Image (S);
+
+   function Trim (S : String) return String
+     with
+       Pre => Is_Valid_Image (S);
+
+   function Expand (S : String) return String
+     with
+       Post =>
+         Is_Valid_Image (Expand'Result) and
+         (if Is_Valid_Image (S) then Expand'Result = S);
+
 private
    Secret_Image_Size : constant Natural := Secret_Type'Size / 4;
 

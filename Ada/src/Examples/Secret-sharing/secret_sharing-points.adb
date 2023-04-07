@@ -1,7 +1,13 @@
 pragma Ada_2012;
-with Ada.Strings.Fixed;
+
+pragma Warnings (Off, "no entities of ""Ada.Text_IO"" are referenced");
+with Ada.Text_IO;          use Ada.Text_IO;
+
+with Ada.Strings.Fixed;    use ada.Strings;
+with Ada.Strings.Maps;
 
 package body Secret_Sharing.Points is
+
    Conversion_Table : constant String := "0123456789abcdef";
 
    function Image (X : Secret_Type) return String
@@ -17,6 +23,7 @@ package body Secret_Sharing.Points is
          S'Length = Secret_Image_Size and
          Is_Hexadecimal_String (S);
 
+
    -----------
    -- Image --
    -----------
@@ -27,10 +34,12 @@ package body Secret_Sharing.Points is
       Work   : Secret_Type := X;
    begin
       for I in reverse Result'Range loop
-         Result (I) := Conversion_Table (Positive (1 + Work mod 16));
+         Result (I) := Conversion_Table (Positive (1 + (Work mod 16)));
 
          Work := Work / 16;
       end loop;
+
+      --  Put_Line (Result & ":" & X'Image);
 
       return Result;
    end Image;
@@ -42,6 +51,16 @@ package body Secret_Sharing.Points is
    function Image (P : Point_Type) return String
    is (Image (P.X) & Image (P.Y));
 
+   --     T : constant String := Image (P.X) & Image (P.Y);
+   --     Q : constant Point_Type := Parse (T);
+   --  begin
+   --     Put_Line ("[" & T & "]" & T'Length'Image & Secret_Image_Size'Image);
+   --     Put_Line (Q.X'Image & Q.Y'Image);
+   --     Put_Line (p.X'Image & p.Y'Image);
+   --
+   --
+   --     return Image (P.X) & Image (P.Y);
+   --  end Image;
 
 
    function Parse (S : String) return Secret_Type
@@ -91,7 +110,20 @@ package body Secret_Sharing.Points is
       end if;
 
       return Point_Type'(X => Parse (Head (S, Secret_Image_Size)),
-                         Y => Parse (Head (S, Secret_Image_Size)));
+                         Y => Parse (Tail (S, Secret_Image_Size)));
    end Parse;
 
+   function Trim (S : String) return String
+   is (Fixed.Trim (Source => S,
+                   Left   => Maps.To_Set ('0'),
+                   Right  => Maps.Null_Set));
+
+   function Expand (S : String) return String
+   is
+      use Ada.Strings.Fixed;
+
+      Padding : constant String := (2 * Secret_Image_Size - S'Length) * '0';
+   begin
+      return Padding & S;
+   end Expand;
 end Secret_Sharing.Points;

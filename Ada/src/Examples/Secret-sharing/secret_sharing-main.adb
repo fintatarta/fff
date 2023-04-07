@@ -16,6 +16,13 @@ with Generic_Polynomials;
 --
 procedure Secret_Sharing.Main is
    use Ada.Command_Line;
+   use Field;
+
+   package Poly is
+     new Generic_Polynomials (Field_Type => Galois,
+                              Field_Zero => Zero,
+                              Field_One  => One);
+
 
    function Encode_Secret (Secret    : Secret_Type;
                            N_Pieces  : Positive;
@@ -30,13 +37,7 @@ procedure Secret_Sharing.Main is
                            Threshold : Positive)
                            return Points.Point_Array
    is
-      use Field;
       use Points;
-
-      package Poly is
-        new Generic_Polynomials (Field_Type => Galois,
-                                 Field_Zero => Zero,
-                                 Field_One  => One);
 
       use type Poly.Polynomial_Degree;
 
@@ -71,9 +72,14 @@ procedure Secret_Sharing.Main is
 
          coeffs : Poly.Coefficient_Array (0 .. Degree);
       begin
+         --  Put_Line ("<< 88");
+
          Rnd.Reset (Random_Generator);
+         --  Put_Line ("<< 77");
 
          for I in Coeffs'Range loop
+            --  Put_Line ("<< 66" & I'Image);
+
             Coeffs (I) :=
               (if I = 0 then  To_Galois (C0) else Random_Coefficient);
          end loop;
@@ -106,7 +112,6 @@ begin
    -- Be pessimistic, we will set Success at the end
    Set_Exit_Status (Failure);
 
-
    Configuration.Initialize;
 
    case Configuration.Action_Required is
@@ -118,7 +123,7 @@ begin
                                          Threshold => Configuration.Threshold);
          begin
             for Fragment of Fragments loop
-               Put_Line (Points.Image (Fragment));
+               Put_Line (Points.Trim (Points.Image (Fragment)));
             end loop;
          end;
 

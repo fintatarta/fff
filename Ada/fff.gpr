@@ -9,7 +9,7 @@ project Fff is
    end Builder;
 
    package Compiler is
-      for Switches ("ada") use ("-g", "-gnata", "-gnat2020", "-gnatwa");
+      for Switches ("ada") use ("-g", "-gnata", "-gnat2020", "-gnato", "-gnatE", "-gnatwa");
    end Compiler;
 
    package Binder is

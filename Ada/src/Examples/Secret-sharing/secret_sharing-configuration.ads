@@ -37,18 +37,14 @@ package Secret_Sharing.Configuration is
      with
        Pre =>
          Initialized and then
-         Action_Required = Encode,
-         Post =>
-           N_Pieces'Result >= Threshold;
+         Action_Required = Encode;
 
    -- The number of  fragment required to reconstruct the secret
    function Threshold return Positive
      with
        Pre =>
          Initialized and then
-         Action_Required = Encode,
-         Post =>
-           Threshold'Result <= N_Pieces;
+         Action_Required = Encode;
 
    function Pieces_Provided return Points.Point_Array
      with
