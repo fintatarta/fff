@@ -1,3 +1,5 @@
+with Interfaces;
+
 with Gf_2p_Varsize;
 with Generic_Matrices;
 with Generic_LUP;
@@ -17,15 +19,22 @@ package Secret_Sharing is
 
    use type Field.Galois;
 
+   function To_Galois (X : Secret_Type) return Field.Galois
+   is (Field.To_Galois (Interfaces.Unsigned_64 (X)));
+
+   function To_secret (X : Field.Galois) return Secret_Type
+   is (Secret_Type(Field.To_Int (X)));
+
    package Mtx is
      new Generic_Matrices (Ring_Type => Field.Galois,
                            Ring_Zero => Field.Zero,
                            Ring_One  => Field.One);
 
+   -- We need the LUP decomposition to take inverses
    package LUP is
-     new Generic_LUP (Field_Type => field.Galois,
+     new Generic_LUP (Field_Type => Field.Galois,
                       Zero       => Field.Zero,
                       One        => Field.One,
-                      Inv        => field.Inv,
+                      Inv        => Field.Inv,
                       Matrices   => Mtx);
 end Secret_Sharing;

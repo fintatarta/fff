@@ -21,7 +21,7 @@ package Secret_Sharing.Configuration is
      with
        Ghost;  -- Used only in contract
 
-   type Action_Type is (Encode, Decode);
+   type Action_Type is (Encode, Decode, Help);
 
    function Action_Required return Action_Type
      with
