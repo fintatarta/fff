@@ -123,6 +123,17 @@ procedure Secret_Sharing.Main is
       Known_Part  : Matrix := Mtx.Zero (N_Rows => Vandermonde.N_Cols,
                                         N_Cols => 1);
    begin
+      --
+      --  The reconstruction is done by solving the system
+      --
+      --    | 1 x_1 x_1^2 ... x_1^(N-1) | |  s_0  |   |  y_1  |
+      --    | 1 x_2 x_2^2 ... x_2^(N-1) | |  s_1  |   |  y_2  |
+      --    | :  :    :           :     | |   :   | = |   :   |
+      --    | 1 x_N x_N^2 ... x_N^(N-1) | | s_N-1 |   |  y_N  |
+      --
+      -- where (x_n, y_n) are the coordinates of the n-th point.  The
+      -- secret is a_0, the first component of the result
+      --
       for Row in 1 .. Vandermonde.N_Rows loop
 
          Known_Part (Row) := To_Galois (Pieces (Row).Y);
@@ -132,17 +143,20 @@ procedure Secret_Sharing.Main is
       end loop;
 
       declare
-         X : constant Matrix := Lup.Solve_Linear_System (A => Vandermonde,
+         S : constant Matrix := Lup.Solve_Linear_System (A => Vandermonde,
                                                          B => Known_Part);
       begin
-         return To_Secret (X (1));
+         --
+         -- That's all folks!!
+         --
+         return To_Secret (S (1));
       end;
    end Decode_Secret;
 begin
    -- Be pessimistic, we will set Success at the end
    Set_Exit_Status (Failure);
 
-   Configuration.Initialize;
+   Configuration.Parse_Command_Line;
 
    case Configuration.Action_Required is
 
@@ -157,7 +171,7 @@ begin
                                          Threshold => Configuration.Threshold);
          begin
             for Fragment of Fragments loop
-               Put_Line (Points.Trim (Points.Image (Fragment)));
+               Put_Line (Points.Image (Fragment));
             end loop;
          end;
 

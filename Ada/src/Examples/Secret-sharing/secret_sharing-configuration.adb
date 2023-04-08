@@ -34,7 +34,7 @@ package body Secret_Sharing.Configuration is
    -- Initialize --
    ----------------
 
-   procedure Initialize is
+   procedure Parse_Command_Line is
       use Ada.Command_Line;
       use Requirement_Holders;
 
@@ -52,6 +52,14 @@ package body Secret_Sharing.Configuration is
 
       procedure Parse_Encode_Command is
       begin
+         --
+         --  In the case of the Encode command we expect 3 arguments
+         --  on the command line:
+         --
+         --  1. The number of points to be generated
+         --  2. The threshold (minimum numnber of points to recover the secret)
+         --  3. The secret itself (a 16 bit number)
+         --
          if Argument_Count /= 4 then
             raise Bad_Command_Line
               with "Wrong number of args to encode";
@@ -77,22 +85,29 @@ package body Secret_Sharing.Configuration is
       is
          Pieces_Provided : Points.Point_Array;
       begin
+         --
+         --  In the case of Decode the parameters are a sequence of
+         --  valid point "images" (currently hexadecimal strings).
+         --  We let the Points package to check their validity and take care
+         --  of converting them to actual points.
+         --
+         --  The number of points is assumed to be equal to the threshold.
+         --
          if Argument_Count < 3 then
+            --
+            -- Less than two parameters make no sense
+            --
             raise Bad_Command_Line
               with "Wrong number of args to decode";
          end if;
 
          for I in 2 .. Argument_Count loop
-            declare
-               Arg : constant String := Points.Expand (Argument (I));
-            begin
-               if not Points.Is_Valid_Image (Arg) then
+            if not Points.Is_Valid_Image (Argument (I)) then
                raise Bad_Command_Line
-                    with "Bad data point spec '" & Argument (I) & "'";
-               end if;
+                 with "Bad data point spec '" & Argument (I) & "'";
+            end if;
 
-               Pieces_Provided.Append (Points.Parse (Arg));
-            end;
+            Pieces_Provided.Append (Points.Parse (Argument (I)));
          end loop;
 
          User_Requirements :=
@@ -133,7 +148,7 @@ package body Secret_Sharing.Configuration is
               with "Unknown command '" & Command & "'";
          end if;
       end;
-   end Initialize;
+   end Parse_Command_Line;
 
    ---------------
    -- Help_Text --

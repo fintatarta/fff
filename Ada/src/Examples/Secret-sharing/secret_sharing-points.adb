@@ -49,7 +49,7 @@ package body Secret_Sharing.Points is
    -----------
 
    function Image (P : Point_Type) return String
-   is (Image (P.X) & Image (P.Y));
+   is (Trim (Image (P.X) & Image (P.Y)));
 
    --     T : constant String := Image (P.X) & Image (P.Y);
    --     Q : constant Point_Type := Parse (T);
@@ -104,13 +104,12 @@ package body Secret_Sharing.Points is
    function Parse (S : String) return Point_Type
    is
       use Ada.Strings.Fixed;
+      Full : constant String := Expand (S);
    begin
-      if S'Length /= 2 * Secret_Image_Size then
-         raise Constraint_Error;
-      end if;
+      pragma Assert (Is_Full_Image (Full));
 
-      return Point_Type'(X => Parse (Head (S, Secret_Image_Size)),
-                         Y => Parse (Tail (S, Secret_Image_Size)));
+      return Point_Type'(X => Parse (Head (Full, Secret_Image_Size)),
+                         Y => Parse (Tail (Full, Secret_Image_Size)));
    end Parse;
 
    function Trim (S : String) return String
