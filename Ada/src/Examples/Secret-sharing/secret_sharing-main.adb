@@ -41,6 +41,25 @@ procedure Secret_Sharing.Main is
 
       use type Poly.Polynomial_Degree;
 
+      --
+      -- Remember the procedure for encoding the secret
+      --
+      -- 1. Get a random polynomial P(x) = a_0 + a_1 x + a_2 x^2 + ...
+      --    of degree Threshold-1 where a_0 is the secret and the other
+      --    coefficients are randomly chosen
+      --
+      -- 2. Choose x_1, x_2, ..., x_N, with N=N_pieces and compute y_i=P(x_i)
+      --    x_i does not need to be secret and it can be anything, for example,
+      --    one can choose x_i=i
+      --
+      -- 3. Every pair (x_i, y_i) is a generated point
+      --
+
+      -- ------
+
+      --
+      -- Get a random polynomial with C0 as the coefficient of x^0
+      --
       function Random_Polynomial (C0     : Secret_Type;
                                   Degree : Natural)
                                   return Poly.Polynomial
@@ -105,7 +124,21 @@ procedure Secret_Sharing.Main is
    function Decode_Secret (Pieces : Points.Point_Array) return Secret_Type
    is
       use Mtx;
+      --
+      --  The reconstruction is done by solving the system
+      --
+      --    | 1 x_1 x_1^2 ... x_1^(N-1) | |  s_0  |   |  y_1  |
+      --    | 1 x_2 x_2^2 ... x_2^(N-1) | |  s_1  |   |  y_2  |
+      --    | :  :    :           :     | |   :   | = |   :   |
+      --    | 1 x_N x_N^2 ... x_N^(N-1) | | s_N-1 |   |  y_N  |
+      --
+      -- where (x_n, y_n) are the coordinates of the n-th point.  The
+      -- secret is a_0, the first component of the result
+      --
 
+      --
+      -- Fill a row of the Vandermonde matrix
+      --
       procedure Fill_Row (Vandermonde : in out Matrix;
                           Row         : Positive;
                           R           : Galois)
@@ -123,17 +156,6 @@ procedure Secret_Sharing.Main is
       Known_Part  : Matrix := Mtx.Zero (N_Rows => Vandermonde.N_Cols,
                                         N_Cols => 1);
    begin
-      --
-      --  The reconstruction is done by solving the system
-      --
-      --    | 1 x_1 x_1^2 ... x_1^(N-1) | |  s_0  |   |  y_1  |
-      --    | 1 x_2 x_2^2 ... x_2^(N-1) | |  s_1  |   |  y_2  |
-      --    | :  :    :           :     | |   :   | = |   :   |
-      --    | 1 x_N x_N^2 ... x_N^(N-1) | | s_N-1 |   |  y_N  |
-      --
-      -- where (x_n, y_n) are the coordinates of the n-th point.  The
-      -- secret is a_0, the first component of the result
-      --
       for Row in 1 .. Vandermonde.N_Rows loop
 
          Known_Part (Row) := To_Galois (Pieces (Row).Y);
@@ -143,9 +165,18 @@ procedure Secret_Sharing.Main is
       end loop;
 
       declare
-         S : constant Matrix := Lup.Solve_Linear_System (A => Vandermonde,
-                                                         B => Known_Part);
+         S           : Matrix;
+         Is_Singular : Boolean;
       begin
+         Lup.Solve_Linear_System (A           => Vandermonde,
+                                  B           => Known_Part,
+                                  Solution    => S,
+                                  Is_Singular => Is_Singular);
+
+         if Is_Singular then
+            raise Lup.Singular_Matrix;
+         end if;
+
          --
          -- That's all folks!!
          --
@@ -157,6 +188,8 @@ begin
    Set_Exit_Status (Failure);
 
    Configuration.Parse_Command_Line;
+
+   Mtx.Register_Printer (Field.Image'Access);
 
    case Configuration.Action_Required is
 
@@ -184,8 +217,11 @@ begin
    Set_Exit_Status (Success);
 
 exception
+   when Lup.Singular_Matrix =>
+      Put_Line (Standard_Error, "Matrix is singular.  Check your data");
+
    when E : Configuration.Bad_Command_Line =>
-      Put_Line (Ada.Exceptions.Exception_Message (E));
+      Put_Line (Standard_Error, Ada.Exceptions.Exception_Message (E));
 
       Put (Standard_Error, Configuration.Help_Text);
 end Secret_Sharing.Main;

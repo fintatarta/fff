@@ -1,4 +1,5 @@
 pragma Ada_2012;
+--  with Ada.Text_IO; use Ada.Text_IO;
 with Generic_LUP.Actions;
 with Ada.Containers.Indefinite_Doubly_Linked_Lists;
 
@@ -219,6 +220,15 @@ package body Generic_LUP is
             end;
 
          end loop;
+
+         --
+         --  Do this extra check since it can happen that the last diagonal
+         --  element becomes zero.  The other diagonal elements are checked
+         --  by Bring_Non_Zero_On_Diagonal.
+         --
+         if U (U.N_Cols, U.N_Cols) = Zero then
+            Is_Singular := True;
+         end if;
       end To_Upper_Triangular;
 
       procedure De_Intertwine_Actions
@@ -470,6 +480,7 @@ package body Generic_LUP is
       if Is_Singular then
          return;
       else
+         --  put_line(Matrices.To_String (U));
          Solution :=
            Solve_Upper_Triangular (U, Solve_Lower_Triangular (L, P * B));
       end if;

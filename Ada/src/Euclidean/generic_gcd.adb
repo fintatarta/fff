@@ -28,9 +28,43 @@ package body Generic_GCD is
       Beta  : out Euclidean_Ring;
       Gcd   : out Euclidean_Ring)
    is
+      --
+      --  This implementation of the algorithm for the GCD employes
+      --  a matrix with two rows and three columns that can be partitioned
+      --  as a 2x2 matrix next to a column vector.  At the n-th iteration
+      --  we have
+      --
+      --     | c_n  d_n  |  a_n  |
+      --     | e_n  f_n  |  b_n  |
+      --
+      -- Call C_n the 2x2 matrix and v_n the column vector.
+      --
+      -- This matrix is initialized to
+      --
+      --     | 1  0 |  a  |
+      --     | 0  1 |  b  |
+      --
+      --  that is, C_1 is the identiy and v_1 has the two parameters A and B.
+      --  The algorithm acts on this matrix by left-multiplication by
+      --  elementary operations (row swap and sum a row to the other).
+      --  Therefore, it is easy to prove that at every iteration
+      --
+      --     C_n  v_1  = v_n                   (*)
+      --
+      --   At the end of the algorithm vector v will have zero in one
+      --   component and the GCD in the other.  By using (*) it is easy
+      --   to get Alpha and Beta from the final C matrix
+      --
       type Status_Matrix is array (1 .. 2, 1 .. 3) of Euclidean_Ring;
 
       Status : Status_Matrix;
+
+      -- Swap the rows of the status (surprised? I do not think so)
+      procedure Swap_Rows (Status : in out Status_Matrix);
+
+      -- Sum to the first row the second one multiplied by Coeff
+      procedure Combine_Rows (Status : in out Status_Matrix;
+                              Coeff  : Euclidean_Ring);
 
       procedure Swap_Rows (Status : in out Status_Matrix) is
          procedure Swap (A, B : in out Euclidean_Ring) is
@@ -54,16 +88,21 @@ package body Generic_GCD is
          end loop;
       end Combine_Rows;
 
+      -- Syntactic sugar for the first component of v
       function Top (Status : Status_Matrix) return Euclidean_Ring
       is (Status (1, 3));
 
+      -- Syntactic sugar for the second component of v
       function Bottom (Status : Status_Matrix) return Euclidean_Ring
       is (Status (2, 3));
 
+      -- At (almost) every time of the algorithm the degree of the first
+      -- compoent of v is not smaller than the degree of the second
+      -- component.  This function checks that this is true.
       function Is_Ordered (Status : Status_Matrix) return Boolean
-      is (Degree (Top (Status)) >= Degree (Bottom (Status)))
-        with Ghost;
+      is (Degree (Top (Status)) >= Degree (Bottom (Status)));
 
+      -- Return true if (*) above is true
       function Is_Coherent (Status : Status_Matrix) return Boolean
       is (for all Row in 1 .. 2 =>
              Status (Row, 3)  = Status (Row, 1) * A + Status (Row, 2) * B)
@@ -106,7 +145,8 @@ package body Generic_GCD is
       Status := (1 => (One, Zero, A),
                  2 => (Zero, One, B));
 
-      if Degree (Top (Status) ) < Degree (Bottom (Status)) then
+      if not Is_Ordered (Status) then
+         --  The rows are not correctly ordered: swap them
          Swap_Rows (Status);
       end if;
 
